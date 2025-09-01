@@ -5,15 +5,56 @@
   <title>Λίστα Λογαριασμών</title>
   <meta name="theme-color" content="#0ea5e9" />
   <style>
-    /* (κρατάμε όλα τα styles όπως πριν, δεν αλλάζουν) */
+    :root {
+      --bg: #0b1220;
+      --card: #121a2b;
+      --muted: #2a364e;
+      --text: #e7eefc;
+      --subtle: #9fb0d1;
+      --accent: #0ea5e9;
+      --accent-2: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --shadow: 0 10px 30px rgba(0,0,0,.3);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1220 0%,#0f172a 100%);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.25}
+    .container{max-width:860px;margin:0 auto;padding:env(safe-area-inset-top) 16px calc(16px + env(safe-area-inset-bottom))}
+    header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(1.3) blur(10px);background:linear-gradient(180deg,rgba(11,18,32,.85) 0%,rgba(11,18,32,.65) 100%);border-bottom:1px solid rgba(255,255,255,.06)}
+    .header-inner{display:flex;align-items:center;gap:12px;padding:12px 16px}
+    .logo{width:32px;height:32px;border-radius:10px;background:radial-gradient(100% 100% at 30% 30%,#38bdf8 0%,#0ea5e9 40%,#0369a1 100%);box-shadow:0 8px 24px rgba(14,165,233,.35)}
+    h1{font-size:20px;margin:0}
+    .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:12px 16px 8px}
+    .card{background:var(--card);border:1px solid var(--muted);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
+    .card h3{margin:0 0 6px;font-size:12px;color:var(--subtle);font-weight:600;text-transform:uppercase}
+    .card .value{font-size:18px;font-weight:800}
+    .badge{font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid var(--muted);color:var(--subtle)}
+    .controls{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:8px 16px 12px}
+    .input,select,button{width:100%;padding:12px;border-radius:12px;border:1px solid var(--muted);background:rgba(18,26,43,.75);color:var(--text)}
+    .btn{cursor:pointer;background:linear-gradient(180deg,#1f2a44,#121a2b);border:1px solid rgba(255,255,255,.08)}
+    .btn-primary{background:linear-gradient(180deg,#38bdf8,#0284c7);color:#03121f;font-weight:800}
+    .btn-danger{background:linear-gradient(180deg,#fca5a5,#ef4444);color:#200;font-weight:800}
+    .panel{margin:12px 16px;padding:12px;border-radius:var(--radius);background:var(--card);border:1px solid var(--muted);box-shadow:var(--shadow)}
+    .list{display:grid;gap:8px;padding:0 16px 120px}
+    .item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:12px;background:var(--card);border:1px solid var(--muted);border-radius:18px;box-shadow:var(--shadow)}
+    .item.paid{opacity:.7}
+    .checkbox{width:22px;height:22px;border-radius:7px;border:2px solid var(--accent-2);display:grid;place-items:center;cursor:pointer}
+    .title{font-weight:800;font-size:15px}
+    .meta{font-size:12px;color:var(--subtle);margin-top:2px}
+    .amount{font-weight:900;text-align:right}
+    .overdue{color:var(--warning);font-weight:800}
+    footer{position:fixed;bottom:0;left:0;right:0;padding:8px 16px;background:linear-gradient(180deg,rgba(11,18,32,.1) 0%,rgba(11,18,32,1) 80%)}
+    .toolbar{display:grid;grid-template-columns:1fr auto auto auto;gap:8px}
   </style>
 </head>
 <body>
   <header>
     <div class="header-inner container">
-      <div class="logo" aria-hidden="true"></div>
+      <div class="logo"></div>
       <h1>Λογαριασμοί</h1>
-      <span class="badge" id="currencyBadge" style="margin-left:auto;">Νόμισμα: <strong>EUR</strong></span>
+      <span class="badge" id="currencyBadge">Νόμισμα: <strong>EUR</strong></span>
     </div>
     <div class="grid container" id="summary">
       <div class="card"><h3>Σύνολο Απλήρωτων</h3><div class="value" id="sum-unpaid">—</div></div>
@@ -36,91 +77,70 @@
         <option value="created">Ταξινόμηση: Προσθήκη</option>
       </select>
     </div>
-  </header>  <section class="panel container" aria-labelledby="formTitle">
+  </header>  <section class="panel container">
     <h2 id="formTitle">Προσθήκη / Επεξεργασία</h2>
     <div class="row">
       <input class="input" id="title" placeholder="Όνομα (π.χ. Ρεύμα)" />
       <input class="input" id="amount" placeholder="Ποσό" inputmode="decimal" />
       <input class="input" id="due" type="date" />
-      <input class="input" id="category" placeholder="Κατηγορία (π.χ. ΔΕΚΟ)" />
+      <input class="input" id="category" placeholder="Κατηγορία" />
     </div>
-    <div class="row2">
-      <textarea class="input" id="notes" placeholder="Σημειώσεις (προαιρετικά)" rows="2"></textarea>
-    </div>
+    <textarea class="input" id="notes" placeholder="Σημειώσεις" rows="2"></textarea>
     <div class="actions">
       <button class="btn btn-primary" id="saveBtn">Αποθήκευση</button>
-      <button class="btn" id="clearBtn" title="Καθαρισμός">Καθαρισμός</button>
+      <button class="btn" id="clearBtn">Καθαρισμός</button>
     </div>
-  </section>  <main class="list" id="list" aria-live="polite"></main>  <footer>
+  </section>  <main class="list" id="list"></main>  <footer>
     <div class="container toolbar">
-      <button class="btn" id="bulkMarkPaid">Σήμανση ως πληρωμένα</button>
-      <button class="btn" id="exportBtn" title="Εξαγωγή JSON">Εξαγωγή</button>
-      <button class="btn" id="importBtn" title="Εισαγωγή JSON">Εισαγωγή</button>
-      <button class="btn" id="settingsBtn" title="Ρυθμίσεις">⚙️</button>
+      <button class="btn" id="bulkMarkPaid">Σήμανση πληρωμένων</button>
+      <button class="btn" id="exportBtn">Εξαγωγή</button>
+      <button class="btn" id="importBtn">Εισαγωγή</button>
+      <button class="btn" id="settingsBtn">⚙️</button>
       <input type="file" id="fileInput" accept="application/json" hidden />
     </div>
-  </footer>  <!-- Ρυθμίσεις -->  <dialog id="settingsDialog">
-    <div class="dialog-body">
-      <h3 style="margin:0 0 8px 0">Ρυθμίσεις</h3>
-      <div class="row2">
-        <label>
-          <div style="font-size:12px;color:var(--subtle); margin-bottom:6px;">Νόμισμα</div>
-          <select id="currency">
-            <option value="EUR" selected>EUR — €</option>
-            <option value="USD">USD — $</option>
-            <option value="GBP">GBP — £</option>
-            <option value="JPY">JPY — ¥</option>
-          </select>
-        </label>
-        <label>
-          <div style="font-size:12px;color:var(--subtle); margin:10px 0 6px;">Κοινή χρήση</div>
-          <button class="btn" id="shareBtn">Μοιράσου τη λίστα</button>
-        </label>
-      </div>
-    </div>
-    <div class="dialog-actions">
-      <button class="btn" id="closeSettings">Κλείσιμο</button>
-    </div>
-  </dialog>  <template id="itemTemplate">
-    <div class="item" draggable="false">
-      <div class="swipe" aria-hidden="true">
-        <div class="left">✅ Πληρώθηκε</div>
-        <div class="right">🗑️ Διαγραφή</div>
-      </div>
-      <div class="checkbox" role="checkbox" aria-checked="false" tabindex="0" title="Σήμανση πληρωμής">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      </div>
-      <div>
-        <div class="title"></div>
-        <div class="meta"></div>
-      </div>
-      <div style="display:grid;gap:6px; justify-items:end;">
-        <div class="amount"></div>
-        <div style="display:flex; gap:6px;">
-          <button class="btn" data-action="edit" title="Επεξεργασία">Επεξεργασία</button>
-          <button class="btn btn-danger" data-action="delete" title="Διαγραφή">Διαγραφή</button>
-        </div>
-      </div>
+  </footer>  <template id="itemTemplate">
+    <div class="item">
+      <div class="checkbox"><svg width="16" height="16" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="3" fill="none"/></svg></div>
+      <div><div class="title"></div><div class="meta"></div></div>
+      <div class="amount"></div>
     </div>
   </template>  <script>
-    // ίδια λογική όπως πριν
-    // αλλαγές: state.currency = 'EUR' και όλα τα μηνύματα/alerts στα ελληνικά
-
-    const $ = (s, r=document)=>r.querySelector(s);
-    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
-
+    const $=(s,r=document)=>r.querySelector(s);
     const storeKey='bills-tracker:v1';
-    let state={ bills:[], editingId:null, currency:'EUR', filter:'unpaid', sort:'due', search:'' };
-
+    let state={bills:[],currency:'EUR'};
     try{const raw=localStorage.getItem(storeKey);if(raw)state={...state,...JSON.parse(raw)}}catch{}
+    const fmtMoney=n=>new Intl.NumberFormat('el-GR',{style:'currency',currency:state.currency}).format(n||0);
 
-    const fmtMoney=(n)=> new Intl.NumberFormat('el-GR',{style:'currency',currency:state.currency}).format(Number(n||0));
-    const today=()=> new Date().toISOString().slice(0,10);
+    function render(){
+      const list=$('#list');list.innerHTML='';
+      if(!state.bills.length){list.innerHTML='<div class="card">Δεν υπάρχουν λογαριασμοί</div>';return}
+      state.bills.forEach(b=>{
+        const n=$('#itemTemplate').content.firstElementChild.cloneNode(true);
+        n.querySelector('.title').textContent=b.title;
+        n.querySelector('.meta').textContent='Λήξη: '+new Date(b.due).toLocaleDateString('el-GR');
+        n.querySelector('.amount').textContent=fmtMoney(b.amount);
+        if(b.paid)n.classList.add('paid');
+        n.querySelector('.checkbox').onclick=()=>{b.paid=!b.paid;save()};
+        list.appendChild(n);
+      })
+    }
 
-    function persist(){localStorage.setItem(storeKey,JSON.stringify({...state,bills:state.bills}))}
+    function save(){localStorage.setItem(storeKey,JSON.stringify(state));render()}
 
-    // (κρατάμε την υπόλοιπη JS ίδια με τα ελληνικά alerts/κειμένα)
+    $('#saveBtn').onclick=()=>{
+      const title=$('#title').value;
+      const amount=parseFloat($('#amount').value);
+      const due=$('#due').value;
+      if(!title||!due||!amount){alert('Συμπλήρωσε όλα τα πεδία');return}
+      state.bills.push({id:Date.now(),title,amount,due,paid:false});
+      save();
+    };
+    $('#clearBtn').onclick=()=>{['#title','#amount','#due','#category','#notes'].forEach(id=>$(id).value='')};
+
+    $('#exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(state)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='logariasmoi.json';a.click()};
+    $('#importBtn').onclick=()=>$('#fileInput').click();
+    $('#fileInput').onchange=async()=>{const f=$('#fileInput').files[0];if(!f)return;const text=await f.text();try{state=JSON.parse(text);save()}catch{alert('Σφάλμα αρχείου')}};
+
+    render();
   </script></body>
 </html>
