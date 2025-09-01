@@ -10,7 +10,7 @@
   th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
   th { background: #0ea5e9; color: white; }
   tr.paid { background: #d4f7d4; }
-  input, button { padding: 8px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
+  input, button, select { padding: 8px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
   button { background: #0ea5e9; color: white; cursor: pointer; }
   button:hover { background: #0284c7; }
   .month-section { margin-bottom: 30px; }
@@ -21,15 +21,18 @@
 <div>
   <input id="title" placeholder="Όνομα λογαριασμού">
   <input id="amount" type="number" placeholder="Ποσό €">
-  <input id="date" type="date">
+  <select id="monthSelect"></select>
   <button onclick="addBill()">Προσθήκη</button>
   <button onclick="exportData()">Εξαγωγή</button>
-  <input type="file" id="fileInput" onchange="importData(event)">
 </div>
 <div id="monthsContainer"></div><script>
 const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
 const storageKey = "myBills";
 let bills = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+// Γέμισμα select με μήνες
+const monthSelect = document.getElementById('monthSelect');
+monthNames.forEach((m,i)=>{ const opt = document.createElement('option'); opt.value = m; opt.textContent = m; monthSelect.appendChild(opt); });
 
 function save() {
   localStorage.setItem(storageKey, JSON.stringify(bills));
@@ -39,18 +42,21 @@ function save() {
 function addBill() {
   const title = document.getElementById("title").value;
   const amount = parseFloat(document.getElementById("amount").value);
-  const date = document.getElementById("date").value;
-  if (!title || !amount || !date) { alert("Συμπλήρωσε όλα τα πεδία!"); return; }
-  const month = monthNames[new Date(date).getMonth()];
+  const month = document.getElementById("monthSelect").value;
+  if (!title || !amount || !month) { alert("Συμπλήρωσε όλα τα πεδία!"); return; }
   bills.push({ id: Date.now(), title, amount, month, paid: false });
   save();
   document.getElementById("title").value = '';
   document.getElementById("amount").value = '';
-  document.getElementById("date").value = '';
 }
 
 function togglePaid(id) {
   bills = bills.map(b => b.id === id ? { ...b, paid: !b.paid } : b);
+  save();
+}
+
+function deleteBill(id) {
+  bills = bills.filter(b => b.id !== id);
   save();
 }
 
@@ -66,7 +72,7 @@ function render() {
     monthDiv.appendChild(h2);
     const table = document.createElement('table');
     const thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th></tr>';
+    thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>';
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
     bills.filter(b => b.month === month).forEach(b => {
@@ -76,6 +82,7 @@ function render() {
         <td><input type="checkbox" ${b.paid ? 'checked' : ''} onclick="togglePaid(${b.id})"></td>
         <td>${b.title}</td>
         <td>${b.amount.toFixed(2)} €</td>
+        <td><button onclick="deleteBill(${b.id})">Διαγραφή</button></td>
       `;
       tbody.appendChild(row);
     });
@@ -91,16 +98,6 @@ function exportData() {
   a.href = URL.createObjectURL(blob);
   a.download = 'logariasmoi.json';
   a.click();
-}
-
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try { bills = JSON.parse(e.target.result); save(); } catch { alert('Σφάλμα στο αρχείο!'); }
-  };
-  reader.readAsText(file);
 }
 
 render();
