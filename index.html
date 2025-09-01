@@ -13,7 +13,7 @@
   input, button, select { padding: 8px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
   button { background: #0ea5e9; color: white; cursor: pointer; }
   button:hover { background: #0284c7; }
-  .month-section { margin-bottom: 30px; }
+  .month-nav { text-align: center; margin: 10px 0; }
 </style>
 </head>
 <body>
@@ -25,14 +25,16 @@
   <button onclick="addBill()">Προσθήκη</button>
   <button onclick="exportData()">Εξαγωγή</button>
 </div>
-<div id="monthsContainer"></div><script>
+<div class="month-nav" id="monthNav"></div>
+<div id="monthContainer"></div><script>
 const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
 const storageKey = "myBills";
 let bills = JSON.parse(localStorage.getItem(storageKey) || "[]");
+let currentMonth = monthNames[new Date().getMonth()];
 
-// Γέμισμα select με μήνες
 const monthSelect = document.getElementById('monthSelect');
-monthNames.forEach((m,i)=>{ const opt = document.createElement('option'); opt.value = m; opt.textContent = m; monthSelect.appendChild(opt); });
+monthNames.forEach(m => { const opt = document.createElement('option'); opt.value = m; opt.textContent = m; monthSelect.appendChild(opt); });
+monthSelect.value = currentMonth;
 
 function save() {
   localStorage.setItem(storageKey, JSON.stringify(bills));
@@ -60,37 +62,60 @@ function deleteBill(id) {
   save();
 }
 
-function render() {
-  const container = document.getElementById("monthsContainer");
-  container.innerHTML = '';
-  const monthsWithBills = [...new Set(bills.map(b => b.month))];
-  monthsWithBills.forEach(month => {
-    const monthDiv = document.createElement('div');
-    monthDiv.classList.add('month-section');
-    const h2 = document.createElement('h2');
-    h2.textContent = month;
-    monthDiv.appendChild(h2);
-    const table = document.createElement('table');
-    const thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>';
-    table.appendChild(thead);
-    const tbody = document.createElement('tbody');
-    bills.filter(b => b.month === month).forEach(b => {
-      const row = document.createElement('tr');
-      if (b.paid) row.classList.add('paid');
-      row.innerHTML = `
-        <td><input type="checkbox" ${b.paid ? 'checked' : ''} onclick="togglePaid(${b.id})"></td>
-        <td>${b.title}</td>
-        <td>${b.amount.toFixed(2)} €</td>
-        <td><button onclick="deleteBill(${b.id})">Διαγραφή</button></td>
-      `;
-      tbody.appendChild(row);
-    });
-    table.appendChild(tbody);
-    monthDiv.appendChild(table);
-    container.appendChild(monthDiv);
-  });
+function changeMonth(month) {
+  currentMonth = month;
+  monthSelect.value = month;
+  render();
 }
+
+function render() {
+  const container = document.getElementById("monthContainer");
+  container.innerHTML = '';
+
+  // Πλοήγηση μήνων που έχουν λογαριασμούς
+  const monthsWithBills = [...new Set(bills.map(b => b.month))];
+  const nav = document.getElementById('monthNav');
+  nav.innerHTML = '';
+  monthsWithBills.forEach(m => {
+    const btn = document.createElement('button');
+    btn.textContent = m;
+    btn.onclick = () => changeMonth(m);
+    if (m === currentMonth) btn.style.background = '#0284c7';
+    nav.appendChild(btn);
+  });
+
+  const monthBills = bills.filter(b => b.month === currentMonth);
+  if (monthBills.length === 0) {
+    container.innerHTML = `<h2>${currentMonth}</h2><p style='text-align:center;'>Δεν υπάρχουν λογαριασμοί</p>`;
+    return;
+  }
+
+  const h2 = document.createElement('h2');
+  h2.textContent = currentMonth;
+  container.appendChild(h2);
+
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>';
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  monthBills.forEach(b => {
+    const row = document.createElement('tr');
+    if (b.paid) row.classList.add('paid');
+    row.innerHTML = `
+      <td><input type="checkbox" ${b.paid ? 'checked' : ''} onclick="togglePaid(${b.id})"></td>
+      <td>${b.title}</td>
+      <td>${b.amount.toFixed(2)} €</td>
+      <td><button onclick="deleteBill(${b.id})">Διαγραφή</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+  table.appendChild(tbody);
+  container.appendChild(table);
+}
+
+monthSelect.onchange = () => changeMonth(monthSelect.value);
+render();
 
 function exportData() {
   const blob = new Blob([JSON.stringify(bills)], { type: 'application/json' });
@@ -99,7 +124,5 @@ function exportData() {
   a.download = 'logariasmoi.json';
   a.click();
 }
-
-render();
 </script></body>
 </html>
