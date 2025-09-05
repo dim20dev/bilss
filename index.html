@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="el">
+<!DOCTYPE html>
+<html lang="el">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,23 +19,56 @@
 </head>
 <body>
 <h1>Λογαριασμοί ανά Μήνα</h1>
+
 <div>
   <input id="title" placeholder="Όνομα λογαριασμού">
+  <select id="commonBills" onchange="fillTitle(this.value)">
+    <option value="">-- Συνηθισμένοι Λογαριασμοί --</option>
+    <option value="ΔΕΗ">ΔΕΗ</option>
+    <option value="ΟΤΕ">ΟΤΕ</option>
+    <option value="COSMOTE">COSMOTE</option>
+    <option value="WIND">WIND</option>
+    <option value="VODAFONE">VODAFONE</option>
+    <option value="Νερό">Νερό</option>
+    <option value="Ενοίκιο">Ενοίκιο</option>
+    <option value="Δημοτικά Τέλη">Δημοτικά Τέλη</option>
+    <option value="Σχολείο">Σχολείο</option>
+    <option value="Internet">Internet</option>
+    <option value="Netflix">Netflix</option>
+    <option value="Spotify">Spotify</option>
+    <option value="Κινητό">Κινητό</option>
+    <option value="Ασφάλεια">Ασφάλεια</option>
+    <option value="Κάρτα">Κάρτα</option>
+  </select>
   <input id="amount" type="number" placeholder="Ποσό €">
   <select id="monthSelect"></select>
   <button onclick="addBill()">Προσθήκη</button>
   <button onclick="exportData()">Εξαγωγή</button>
 </div>
+
 <div class="month-nav" id="monthNav"></div>
-<div id="monthContainer"></div><script>
+<div id="monthContainer"></div>
+
+<script>
 const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
 const storageKey = "myBills";
 let bills = JSON.parse(localStorage.getItem(storageKey) || "[]");
 let currentMonth = monthNames[new Date().getMonth()];
 
 const monthSelect = document.getElementById('monthSelect');
-monthNames.forEach(m => { const opt = document.createElement('option'); opt.value = m; opt.textContent = m; monthSelect.appendChild(opt); });
+monthNames.forEach(m => { 
+  const opt = document.createElement('option'); 
+  opt.value = m; 
+  opt.textContent = m; 
+  monthSelect.appendChild(opt); 
+});
 monthSelect.value = currentMonth;
+
+function fillTitle(val) {
+  if (val) {
+    document.getElementById("title").value = val;
+  }
+}
 
 function save() {
   localStorage.setItem(storageKey, JSON.stringify(bills));
@@ -50,6 +84,7 @@ function addBill() {
   save();
   document.getElementById("title").value = '';
   document.getElementById("amount").value = '';
+  document.getElementById("commonBills").value = '';
 }
 
 function togglePaid(id) {
@@ -124,5 +159,6 @@ function exportData() {
   a.download = 'logariasmoi.json';
   a.click();
 }
-</script></body>
+</script>
+</body>
 </html>
