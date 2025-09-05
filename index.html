@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+  
+  <!DOCTYPE html>
 <html lang="el">
 <head>
 <meta charset="UTF-8">
@@ -15,7 +16,21 @@
   button { background: #0ea5e9; color: white; cursor: pointer; }
   button:hover { background: #0284c7; }
   .month-nav { text-align: center; margin: 10px 0; }
-  .flex { display: flex; gap: 5px; flex-wrap: wrap; }
+  .flex { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+  /* settings */
+  #settingsBtn { 
+    position: fixed; top: 10px; right: 10px; 
+    background: #0ea5e9; border-radius: 50%; width: 40px; height: 40px;
+    font-size: 20px; color: white; text-align: center; line-height: 40px;
+  }
+  #settingsPanel {
+    display: none;
+    position: fixed; top: 60px; right: 10px;
+    background: white; border: 1px solid #ccc; border-radius: 10px;
+    padding: 15px; width: 280px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  #settingsPanel h3 { margin-top: 0; text-align: center; }
 </style>
 </head>
 <body>
@@ -24,11 +39,8 @@
 <div class="flex">
   <input id="title" placeholder="Όνομα λογαριασμού">
   <select id="commonBills" onchange="fillTitle(this.value)">
-    <option value="">-- Συνηθισμένοι Λογαριασμοί --</option>
+    <option value="">-- Συνηθισμένοι --</option>
   </select>
-  <input id="newCommon" placeholder="Νέος συνηθισμένος">
-  <button onclick="addCommon()">➕ Προσθήκη στη λίστα</button>
-  <button onclick="deleteCommon()">🗑️ Διαγραφή επιλεγμένου</button>
 </div>
 
 <div class="flex">
@@ -40,6 +52,17 @@
 
 <div class="month-nav" id="monthNav"></div>
 <div id="monthContainer"></div>
+
+<!-- Settings button -->
+<div id="settingsBtn" onclick="toggleSettings()">⚙️</div>
+
+<!-- Settings panel -->
+<div id="settingsPanel">
+  <h3>Ρυθμίσεις</h3>
+  <input id="newCommon" placeholder="Νέος συνηθισμένος">
+  <button onclick="addCommon()">➕ Προσθήκη</button>
+  <button onclick="deleteCommon()">🗑️ Διαγραφή επιλεγμένου</button>
+</div>
 
 <script>
 const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
@@ -69,7 +92,7 @@ monthSelect.value = currentMonth;
 // γέμισμα dropdown συνηθισμένων
 function renderCommon() {
   const select = document.getElementById("commonBills");
-  select.innerHTML = '<option value="">-- Συνηθισμένοι Λογαριασμοί --</option>';
+  select.innerHTML = '<option value="">-- Συνηθισμένοι --</option>';
   commonBills.forEach(c => {
     const opt = document.createElement("option");
     opt.value = c;
@@ -193,6 +216,12 @@ function exportData() {
   a.href = URL.createObjectURL(blob);
   a.download = 'logariasmoi.json';
   a.click();
+}
+
+// toggle settings panel
+function toggleSettings() {
+  const panel = document.getElementById("settingsPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
 }
 </script>
 </body>
