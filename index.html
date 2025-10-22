@@ -1,237 +1,408 @@
-  
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="el">
 <head>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0SY6YM8NJN"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Λογαριασμοί ανά Μήνα</title>
 
-  gtag('config', 'G-0SY6YM8NJN');
-</script>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Λογαριασμοί ανά Μήνα</title>
-<style>
-  body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
-  h1, h2 { text-align: center; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-  th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-  th { background: #0ea5e9; color: white; }
-  tr.paid { background: #d4f7d4; }
-  input, button, select { padding: 8px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
-  button { background: #0ea5e9; color: white; cursor: pointer; }
-  button:hover { background: #0284c7; }
-  .month-nav { text-align: center; margin: 10px 0; }
-  .flex { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
-  /* settings */
-  #settingsBtn { 
-    position: fixed; top: 10px; right: 10px; 
-    background: #0ea5e9; border-radius: 50%; width: 40px; height: 40px;
-    font-size: 20px; color: white; text-align: center; line-height: 40px;
-  }
-  #settingsPanel {
-    display: none;
-    position: fixed; top: 60px; right: 10px;
-    background: white; border: 1px solid #ccc; border-radius: 10px;
-    padding: 15px; width: 280px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  }
-  #settingsPanel h3 { margin-top: 0; text-align: center; }
-</style>
+  <!-- Supabase client (UMD build) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <style>
+    :root{
+      --primary: #0ea5e9;
+      --primary-dark: #0284c7;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --muted: #65748b;
+      --radius: 12px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#0f172a;margin:16px;}
+    .container{max-width:920px;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    h1{font-size:20px;margin:0}
+    .card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+    input,select,button{padding:10px 12px;border-radius:10px;border:1px solid #e6edf3;font-size:14px}
+    input[type="number"]{width:120px}
+    button.primary{background:var(--primary);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 16px rgba(14,165,233,0.12)}
+    button.ghost{background:transparent;color:var(--primary);border:1px solid rgba(14,165,233,0.12)}
+    button.small{padding:6px 8px;font-size:13px;border-radius:8px}
+    .month-nav{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+    .month-nav button{background:transparent;color:var(--muted);border:1px solid transparent;padding:6px 10px;border-radius:8px;cursor:pointer}
+    .month-nav button.active{background:var(--primary);color:#fff;border-color:var(--primary-dark)}
+    table{width:100%;border-collapse:collapse;margin-top:10px;background:transparent}
+    th,td{padding:12px;text-align:center;border-bottom:1px solid #f0f4f8}
+    tr.paid{background:#e9fbf0}
+    footer{margin-top:16px;text-align:center;color:var(--muted);font-size:13px}
+    /* settings button */
+    #settingsBtn{position:fixed;top:14px;right:14px;background:var(--primary);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;z-index:999;box-shadow:0 8px 18px rgba(2,6,23,0.12);cursor:pointer}
+    #settingsPanel{display:none;position:fixed;top:72px;right:14px;width:360px;background:var(--card);border-radius:12px;padding:12px;z-index:999;box-shadow:0 12px 30px rgba(2,6,23,0.12)}
+    #settingsPanel h3{margin:0 0 6px 0;text-align:center}
+    .settings-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+    pre{background:#f8fafc;padding:8px;border-radius:8px;border:1px solid #eef2f7;font-size:12px;overflow:auto}
+    @media(max-width:640px){
+      .controls{flex-direction:column}
+      input,select,button{width:100%}
+      #settingsPanel{left:10px;right:10px;width:auto}
+    }
+  </style>
 </head>
 <body>
-<h1>Λογαριασμοί ανά Μήνα</h1>
+  <div class="container">
+    <header>
+      <div>
+        <h1 id="app-title">Λογαριασμοί ανά Μήνα</h1>
+        <div id="sub-title" style="color:var(--muted);font-size:13px">Offline + cloud sync</div>
+      </div>
 
-<div class="flex">
-  <input id="title" placeholder="Όνομα λογαριασμού">
-  <select id="commonBills" onchange="fillTitle(this.value)">
-    <option value="">-- Συνηθισμένοι --</option>
-  </select>
-</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="font-size:13px;color:var(--muted);margin-right:6px">Γλώσσα</label>
+        <select id="langSelect" style="padding:8px;border-radius:8px">
+          <option value="el">Ελληνικά</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </header>
 
-<div class="flex">
-  <input id="amount" type="number" placeholder="Ποσό €">
-  <select id="monthSelect"></select>
-  <button onclick="addBill()">Προσθήκη</button>
-  <button onclick="exportData()">Εξαγωγή</button>
-</div>
+    <div class="card">
+      <div class="controls">
+        <input id="title" placeholder="Όνομα λογαριασμού">
+        <select id="commonBills" onchange="fillTitle(this.value)">
+          <option value="">-- Συνηθισμένοι --</option>
+        </select>
+      </div>
 
-<div class="month-nav" id="monthNav"></div>
-<div id="monthContainer"></div>
+      <div class="controls">
+        <input id="amount" type="number" placeholder="Ποσό €">
+        <select id="monthSelect" style="min-width:140px"></select>
+        <button class="primary" id="addBtn">Προσθήκη</button>
+        <button class="ghost" id="exportBtn">Εξαγωγή</button>
+      </div>
+    </div>
 
-<!-- Settings button -->
-<div id="settingsBtn" onclick="toggleSettings()">⚙️</div>
+    <div class="month-nav" id="monthNav"></div>
+    <div id="monthContainer"></div>
 
-<!-- Settings panel -->
-<div id="settingsPanel">
-  <h3>Ρυθμίσεις</h3>
-  <input id="newCommon" placeholder="Νέος συνηθισμένος">
-  <button onclick="addCommon()">➕ Προσθήκη</button>
-  <button onclick="deleteCommon()">🗑️ Διαγραφή επιλεγμένου</button>
-</div>
+    <footer class="card" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:13px;color:var(--muted)">Αυτόματος συγχρονισμός</div>
+      <div id="status" style="font-size:13px;color:var(--muted)">Local</div>
+    </footer>
+  </div>
 
-<script>
-const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
-const storageKey = "myBills";
-const commonKey = "myCommonBills";
+  <div id="settingsBtn">⚙️</div>
 
-// αρχικοί συνηθισμένοι λογαριασμοί
-const defaultCommon = [
-  "ΑΓΓΛΙΚΑ-ΣΟΦΙ","ΑΓΓΛΙΚΑ-ΔΙΜΑΣ","ΜΠΑΣΚΕΤ","ΓΥΜΝΑΣΤΙΚΗ",
-  "ΡΕΥΜΑ","ΝΕΡΟ","ΡΩΣΙΚΑ","ΖΩΓΡΑΦΙΚΗ"
-];
+  <div id="settingsPanel" class="card" role="dialog" aria-label="Settings">
+    <h3 id="settingsTitle">Ρυθμίσεις</h3>
 
-let bills = JSON.parse(localStorage.getItem(storageKey) || "[]");
-let commonBills = JSON.parse(localStorage.getItem(commonKey) || JSON.stringify(defaultCommon));
-let currentMonth = monthNames[new Date().getMonth()];
+    <!-- common bills -->
+    <div class="settings-row">
+      <input id="newCommon" placeholder="Νέος συνηθισμένος">
+      <button class="small" id="addCommonBtn">➕</button>
+    </div>
+    <div class="settings-row">
+      <select id="commonDeleteSelect" style="flex:1"></select>
+      <button class="small" id="delCommonBtn">🗑️</button>
+    </div>
 
-// γέμισμα μηνών
-const monthSelect = document.getElementById('monthSelect');
-monthNames.forEach(m => { 
-  const opt = document.createElement('option'); 
-  opt.value = m; 
-  opt.textContent = m; 
-  monthSelect.appendChild(opt); 
-});
-monthSelect.value = currentMonth;
+    <hr style="border:none;height:1px;background:#f0f4f8;margin:10px 0">
 
-// γέμισμα dropdown συνηθισμένων
-function renderCommon() {
-  const select = document.getElementById("commonBills");
-  select.innerHTML = '<option value="">-- Συνηθισμένοι --</option>';
-  commonBills.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c;
-    opt.textContent = c;
-    select.appendChild(opt);
+    <div style="font-weight:600;margin-bottom:8px">Σύνδεση Συσκευών</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Δημιουργήστε κωδικό σε μία συσκευή και εισάγετέ τον στην άλλη.</div>
+    <div class="settings-row">
+      <button class="primary" id="generateCodeBtn">Δημιουργία Κωδικού</button>
+      <div id="genCodeDisplay" style="font-weight:700;padding-left:8px"></div>
+    </div>
+    <div class="settings-row">
+      <input id="inputCode" placeholder="Εισάγετε κωδικό">
+      <button class="primary" id="acceptCodeBtn">Σύνδεση</button>
+    </div>
+
+    <hr style="border:none;height:1px;background:#f0f4f8;margin:10px 0">
+
+    <div style="font-weight:600;margin-bottom:8px">Supabase (πληκτρολογήστε μια φορά)</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Βάλτε εδώ το URL & το public anon key και τα endpoints</div>
+
+    <div class="settings-row" style="flex-direction:column;align-items:stretch">
+      <input id="supabaseUrl" placeholder="SUPABASE_URL (π.χ. https://abc.supabase.co)">
+      <input id="supabaseAnon" placeholder="SUPABASE_ANON_KEY">
+      <input id="generateEndpoint" placeholder="GENERATE endpoint (Edge Function)">
+      <input id="acceptEndpoint" placeholder="ACCEPT endpoint (Edge Function)">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="primary" id="saveSettingsBtn">Save settings</button>
+        <button class="ghost" id="clearSettingsBtn">Clear</button>
+      </div>
+    </div>
+
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">
+      Τα δεδομένα θα συγχρονιστούν με τον cloud backend αν οι ρυθμίσεις είναι σωστές.
+    </div>
+  </div>
+
+  <script>
+  /************************************************************************
+   * BILSS - single-file upgrade:
+   * - starts with empty 'common' list (no default bills)
+   * - settings panel to store Supabase URL/Anon/Endpoints one time
+   * - auto realtime sync when Supabase configured
+   * - pairing generate/accept calls
+   *
+   * IMPORTANT: You must create the tables & RLS policies in Supabase as described
+   * previously. This client expects tables: bills, common_bills, pair_codes, devices.
+   ************************************************************************/
+
+  // ---- i18n data (EN / EL)
+  const I18N = {
+    "el": {
+      "app_title": "Λογαριασμοί ανά Μήνα",
+      "sub_title": "Offline + cloud sync",
+      "add": "Προσθήκη",
+      "export": "Εξαγωγή",
+      "settings": "Ρυθμίσεις",
+      "pairing_generate": "Δημιουργία Κωδικού",
+      "pairing_accept": "Σύνδεση",
+      "pairing_placeholder": "Εισάγετε κωδικό",
+      "no_bills": "Δεν υπάρχουν λογαριασμοί",
+      "new_common": "Νέος συνηθισμένος"
+    },
+    "en": {
+      "app_title": "Bills per Month",
+      "sub_title": "Offline + cloud sync",
+      "add": "Add",
+      "export": "Export",
+      "settings": "Settings",
+      "pairing_generate": "Generate Code",
+      "pairing_accept": "Connect",
+      "pairing_placeholder": "Enter code",
+      "no_bills": "No bills",
+      "new_common": "New common"
+    }
+  };
+
+  // ---- App state
+  const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
+  const storageKey = "bilss_bills_v1";
+  const commonKey = "bilss_common_v1";
+  let bills = JSON.parse(localStorage.getItem(storageKey) || "[]");
+  // start with empty common list
+  let commonBills = JSON.parse(localStorage.getItem(commonKey) || "[]");
+  let currentMonth = monthNames[new Date().getMonth()];
+  let lang = localStorage.getItem('lang') || (navigator.language && navigator.language.startsWith('el') ? 'el' : 'en');
+  document.getElementById('langSelect').value = lang;
+
+  // Supabase / backend placeholders (will be set by user in Settings)
+  let SUPABASE_URL = localStorage.getItem('bilss_supabase_url') || "";
+  let SUPABASE_ANON = localStorage.getItem('bilss_supabase_anon') || "";
+  let GENERATE_ENDPOINT = localStorage.getItem('bilss_generate_endpoint') || "";
+  let ACCEPT_ENDPOINT = localStorage.getItem('bilss_accept_endpoint') || "";
+
+  // supabase client (initialized after user saves settings)
+  let supabase = null;
+  // session & identification
+  let session = null;
+  // device id (stable per browser)
+  let deviceId = localStorage.getItem('bilss_device_id') || cryptoRandomUUID();
+  localStorage.setItem('bilss_device_id', deviceId);
+
+  // DOM wires
+  const monthSelect = document.getElementById('monthSelect');
+  monthNames.forEach(m => {
+    const opt = document.createElement('option'); opt.value = m; opt.textContent = m; monthSelect.appendChild(opt);
   });
-}
-renderCommon();
+  monthSelect.value = currentMonth;
 
-function fillTitle(val) {
-  if (val) {
-    document.getElementById("title").value = val;
+  // render common dropdowns
+  function renderCommon() {
+    const select = document.getElementById("commonBills");
+    const delSelect = document.getElementById("commonDeleteSelect");
+    select.innerHTML = '<option value="">-- Συνηθισμένοι --</option>';
+    delSelect.innerHTML = '<option value="">-- Επιλέξτε --</option>';
+    commonBills.forEach(c => {
+      const opt = document.createElement("option"); opt.value = c; opt.textContent = c; select.appendChild(opt);
+      const opt2 = document.createElement("option"); opt2.value = c; opt2.textContent = c; delSelect.appendChild(opt2);
+    });
   }
-}
-
-function addCommon() {
-  const val = document.getElementById("newCommon").value.trim();
-  if (!val) return;
-  if (!commonBills.includes(val)) {
-    commonBills.push(val);
-    localStorage.setItem(commonKey, JSON.stringify(commonBills));
-    renderCommon();
-  }
-  document.getElementById("newCommon").value = '';
-}
-
-function deleteCommon() {
-  const select = document.getElementById("commonBills");
-  const val = select.value;
-  if (!val) return;
-  commonBills = commonBills.filter(c => c !== val);
-  localStorage.setItem(commonKey, JSON.stringify(commonBills));
   renderCommon();
-}
 
-function save() {
-  localStorage.setItem(storageKey, JSON.stringify(bills));
-  render();
-}
+  function fillTitle(val){ if(val) document.getElementById('title').value = val; }
 
-function addBill() {
-  const title = document.getElementById("title").value;
-  const amount = parseFloat(document.getElementById("amount").value);
-  const month = document.getElementById("monthSelect").value;
-  if (!title || !amount || !month) { alert("Συμπλήρωσε όλα τα πεδία!"); return; }
-  bills.push({ id: Date.now(), title, amount, month, paid: false });
-  save();
-  document.getElementById("title").value = '';
-  document.getElementById("amount").value = '';
-  document.getElementById("commonBills").value = '';
-}
-
-function togglePaid(id) {
-  bills = bills.map(b => b.id === id ? { ...b, paid: !b.paid } : b);
-  save();
-}
-
-function deleteBill(id) {
-  bills = bills.filter(b => b.id !== id);
-  save();
-}
-
-function changeMonth(month) {
-  currentMonth = month;
-  monthSelect.value = month;
-  render();
-}
-
-function render() {
-  const container = document.getElementById("monthContainer");
-  container.innerHTML = '';
-
-  // Πλοήγηση μήνων που έχουν λογαριασμούς
-  const monthsWithBills = [...new Set(bills.map(b => b.month))];
-  const nav = document.getElementById('monthNav');
-  nav.innerHTML = '';
-  monthsWithBills.forEach(m => {
-    const btn = document.createElement('button');
-    btn.textContent = m;
-    btn.onclick = () => changeMonth(m);
-    if (m === currentMonth) btn.style.background = '#0284c7';
-    nav.appendChild(btn);
-  });
-
-  const monthBills = bills.filter(b => b.month === currentMonth);
-  if (monthBills.length === 0) {
-    container.innerHTML = `<h2>${currentMonth}</h2><p style='text-align:center;'>Δεν υπάρχουν λογαριασμοί</p>`;
-    return;
+  // add / delete common
+  document.getElementById('addCommonBtn').addEventListener('click', addCommon);
+  document.getElementById('delCommonBtn').addEventListener('click', deleteCommon);
+  function addCommon(){
+    const val = document.getElementById('newCommon').value.trim();
+    if(!val) return;
+    if(!commonBills.includes(val)){ commonBills.push(val); localStorage.setItem(commonKey, JSON.stringify(commonBills)); renderCommon(); syncCommonToServer().catch(()=>{}); }
+    document.getElementById('newCommon').value = '';
+  }
+  function deleteCommon(){
+    const sel = document.getElementById('commonDeleteSelect'); const v = sel.value;
+    if(!v) return;
+    commonBills = commonBills.filter(x=>x!==v); localStorage.setItem(commonKey, JSON.stringify(commonBills)); renderCommon(); syncCommonToServer().catch(()=>{});
   }
 
-  const h2 = document.createElement('h2');
-  h2.textContent = currentMonth;
-  container.appendChild(h2);
+  // helper to save local
+  function saveLocal(){ localStorage.setItem(storageKey, JSON.stringify(bills)); render(); }
 
-  const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>';
-  table.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  monthBills.forEach(b => {
-    const row = document.createElement('tr');
-    if (b.paid) row.classList.add('paid');
-    row.innerHTML = `
-      <td><input type="checkbox" ${b.paid ? 'checked' : ''} onclick="togglePaid(${b.id})"></td>
-      <td>${b.title}</td>
-      <td>${b.amount.toFixed(2)} €</td>
-      <td><button onclick="deleteBill(${b.id})">Διαγραφή</button></td>
-    `;
-    tbody.appendChild(row);
+  // add bill
+  document.getElementById('addBtn').addEventListener('click', addBill);
+  async function addBill(){
+    const title = document.getElementById('title').value.trim();
+    const amount = parseFloat(document.getElementById('amount').value);
+    const month = document.getElementById('monthSelect').value;
+    if(!title || !amount || !month){ alert(lang==='el'? 'Συμπλήρωσε όλα τα πεδία!' : 'Fill all fields!'); return; }
+
+    // optimistic local add
+    const localId = Date.now() + Math.floor(Math.random()*1000);
+    const newBill = { id: localId, title, amount, month, paid:false, _local:true };
+    bills.push(newBill);
+    saveLocal();
+
+    // push to server (auto sync) - best-effort
+    if(supabase && (session && session.userId)){
+      try {
+        const insert = { user_id: session.userId, title, amount, month, paid:false };
+        const { error } = await supabase.from('bills').insert([insert]);
+        if(error) console.warn('Insert error', error);
+      } catch(e){ console.warn('sync insert', e); }
+    } else {
+      // try later when connected
+    }
+
+    document.getElementById('title').value=''; document.getElementById('amount').value=''; document.getElementById('commonBills').value='';
+  }
+
+  // toggle paid
+  window.togglePaid = async function(id){
+    bills = bills.map(b => b.id===id ? {...b, paid:!b.paid} : b);
+    saveLocal();
+    if(supabase && session && session.userId){
+      // try to update server row: match heuristically by title+amount+month
+      const maybe = bills.find(x => x.id===id);
+      if(maybe){
+        try {
+          const { data } = await supabase.from('bills').select('id,paid').eq('user_id', session.userId).eq('title', maybe.title).eq('amount', maybe.amount).eq('month', maybe.month).limit(1);
+          if(data && data.length>0){
+            await supabase.from('bills').update({ paid: !data[0].paid }).eq('id', data[0].id);
+          }
+        } catch(e){ console.warn(e); }
+      }
+    }
+  };
+
+  // delete
+  window.deleteBill = async function(id){
+    const maybe = bills.find(b=>b.id===id);
+    bills = bills.filter(b=>b.id!==id); saveLocal();
+    if(supabase && session && session.userId && maybe){
+      try {
+        const { data } = await supabase.from('bills').select('id').eq('user_id', session.userId).eq('title', maybe.title).eq('amount', maybe.amount).eq('month', maybe.month).limit(1);
+        if(data && data.length>0) await supabase.from('bills').delete().eq('id', data[0].id);
+      } catch(e){ console.warn(e); }
+    }
+  };
+
+  // change month & render
+  function changeMonth(m){ currentMonth = m; monthSelect.value = m; render(); }
+  monthSelect.onchange = ()=> changeMonth(monthSelect.value);
+
+  function render(){
+    const container = document.getElementById('monthContainer'); container.innerHTML='';
+    const monthsWith = [...new Set(bills.map(b=>b.month))];
+    const nav = document.getElementById('monthNav'); nav.innerHTML='';
+    monthsWith.forEach(m=>{
+      const btn = document.createElement('button'); btn.textContent=m; btn.onclick=()=>changeMonth(m); if(m===currentMonth) btn.classList.add('active'); nav.appendChild(btn);
+    });
+    const monthBills = bills.filter(b=>b.month===currentMonth);
+    if(monthBills.length===0){ container.innerHTML=`<h2>${currentMonth}</h2><p style="text-align:center">${I18N[lang].no_bills}</p>`; return; }
+    const h2 = document.createElement('h2'); h2.textContent=currentMonth; container.appendChild(h2);
+    const table = document.createElement('table'); const thead = document.createElement('thead'); thead.innerHTML='<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>'; table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    monthBills.forEach(b=>{
+      const row = document.createElement('tr'); if(b.paid) row.classList.add('paid');
+      row.innerHTML = `
+        <td><input type="checkbox" ${b.paid? 'checked' : ''} onclick="togglePaid(${b.id})"></td>
+        <td>${escapeHtml(b.title)}</td>
+        <td>${Number(b.amount).toFixed(2)} €</td>
+        <td><button class="small" onclick="deleteBill(${b.id})">Διαγραφή</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody); container.appendChild(table);
+  }
+
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // export
+  document.getElementById('exportBtn').addEventListener('click', ()=> {
+    const blob = new Blob([JSON.stringify(bills)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='logariaσmoi.json'; a.click();
   });
-  table.appendChild(tbody);
-  container.appendChild(table);
-}
 
-monthSelect.onchange = () => changeMonth(monthSelect.value);
-render();
+  // settings toggle
+  document.getElementById('settingsBtn').addEventListener('click', ()=> {
+    const p = document.getElementById('settingsPanel'); p.style.display = p.style.display==='block' ? 'none' : 'block';
+  });
 
-function exportData() {
-  const blob = new Blob([JSON.stringify(bills)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'logariasmoi.json';
-  a.click();
-}
+  // i18n apply
+  function applyLang(){ const t = I18N[lang]; document.getElementById('app-title').textContent=t.app_title; document.getElementById('sub-title').textContent=t.sub_title; document.getElementById('addBtn').textContent=t.add; document.getElementById('exportBtn').textContent=t.export; document.getElementById('generateCodeBtn').textContent=t.pairing_generate; document.getElementById('acceptCodeBtn').textContent=t.pairing_accept; document.getElementById('inputCode').placeholder=t.pairing_placeholder; document.getElementById('newCommon').placeholder=t.new_common; }
+  applyLang();
+  document.getElementById('langSelect').addEventListener('change', e=>{ lang=e.target.value; localStorage.setItem('lang', lang); applyLang(); render(); });
 
-// toggle settings panel
-function toggleSettings() {
-  const panel = document.getElementById("settingsPanel");
-  panel.style.display = panel.style.display === "block" ? "none" : "block";
-}
-</script>
-</body>
-</html>
+  // crypto random uuid
+  function cryptoRandomUUID(){ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); return 'id-'+Date.now()+'-'+Math.floor(Math.random()*1000000); }
+
+  // status UI
+  function setStatus(text){ document.getElementById('status').textContent = text; }
+
+  // ------------- Settings: load/save endpoints -------------
+  document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+  document.getElementById('clearSettingsBtn').addEventListener('click', clearSettings);
+
+  function loadSettingsIntoUI(){
+    document.getElementById('supabaseUrl').value = SUPABASE_URL;
+    document.getElementById('supabaseAnon').value = SUPABASE_ANON;
+    document.getElementById('generateEndpoint').value = GENERATE_ENDPOINT;
+    document.getElementById('acceptEndpoint').value = ACCEPT_ENDPOINT;
+  }
+  loadSettingsIntoUI();
+
+  function saveSettings(){
+    SUPABASE_URL = document.getElementById('supabaseUrl').value.trim();
+    SUPABASE_ANON = document.getElementById('supabaseAnon').value.trim();
+    GENERATE_ENDPOINT = document.getElementById('generateEndpoint').value.trim();
+    ACCEPT_ENDPOINT = document.getElementById('acceptEndpoint').value.trim();
+    localStorage.setItem('bilss_supabase_url', SUPABASE_URL);
+    localStorage.setItem('bilss_supabase_anon', SUPABASE_ANON);
+    localStorage.setItem('bilss_generate_endpoint', GENERATE_ENDPOINT);
+    localStorage.setItem('bilss_accept_endpoint', ACCEPT_ENDPOINT);
+    loadSettingsIntoUI();
+    initSupabase(); // try to init & connect now
+  }
+
+  function clearSettings(){
+    if(!confirm('Clear Supabase settings?')) return;
+    SUPABASE_URL=''; SUPABASE_ANON=''; GENERATE_ENDPOINT=''; ACCEPT_ENDPOINT='';
+    localStorage.removeItem('bilss_supabase_url'); localStorage.removeItem('bilss_supabase_anon'); localStorage.removeItem('bilss_generate_endpoint'); localStorage.removeItem('bilss_accept_endpoint');
+    loadSettingsIntoUI();
+    setStatus('Local only');
+    // tear down client
+    supabase = null; session = null;
+  }
+
+  // ------------- Supabase init & sync logic -------------
+  async function initSupabase(){
+    if(!SUPABASE_URL || !SUPABASE_ANON){ setStatus('Local only'); return; }
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+      setStatus('Connecting...');
+      // try anonymous sign-in flow if available
+      try {
+        // Many builds may not have signInAnonymously; new API: signInWithOtp, signInWithPassword, or signUp. We'll try several fallbacks.
+        if(supabase.auth && supabase.auth.signInAnonymously){
+          const { data, error } = await supabase.auth.signInAnonymously();
+          if(error) console.warn('anon signIn error', error);
+          if(data && data.user) session = { userId: data.user.id };
+        } else if(supabase.auth && supabase.auth.getUser){
+          const get = await supabase.auth.getSession();
+          if(get && get.data && get.data.session && get.data.ses
