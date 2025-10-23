@@ -4,6 +4,16 @@
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-0SY6YM8NJN"></script>
 <script>
+  // === 🔹 SUPABASE CONFIG 🔹 ===
+// Βάλε εδώ τα δικά σου URLs και keys
+
+const SUPABASE_URL = "https://orncnzpoavqxtzrzgwrv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. ...";
+const SUPABASE_FN_GENERATE = "https://orncnzpoavqxtzrzgwrv.supabase.co/functions/v1/generate";
+const SUPABASE_FN_ACCEPT = "https://orncnzpoavqxtzrzgwrv.supabase.co/functions/v1/accept";
+
+// Δημιουργία του client Supabase (θα χρησιμοποιείται παντού)
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
