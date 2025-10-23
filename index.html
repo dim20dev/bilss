@@ -1,255 +1,265 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0SY6YM8NJN"></script>
-<script>
-  // === 🔹 SUPABASE CONFIG 🔹 ===
-// Βάλε εδώ τα δικά σου URLs και keys
+  <!-- Google tag (gtag.js) - kept from your original -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0SY6YM8NJN"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0SY6YM8NJN');
+  </script>
 
-const SUPABASE_URL = "https://orncnzpoavqxtzrzgwrv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. ...";
-const SUPABASE_FN_GENERATE = "https://orncnzpoavqxtzrzgwrv.supabase.co/functions/v1/generate";
-const SUPABASE_FN_ACCEPT = "https://orncnzpoavqxtzrzgwrv.supabase.co/functions/v1/accept";
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Λογαριασμοί ανά Μήνα</title>
 
-// Δημιουργία του client Supabase (θα χρησιμοποιείται παντού)
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <!-- Supabase client (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
-  gtag('config', 'G-0SY6YM8NJN');
-</script>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Λογαριασμοί ανά Μήνα</title>
-<style>
-  body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
-  h1, h2 { text-align: center; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-  th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-  th { background: #0ea5e9; color: white; }
-  tr.paid { background: #d4f7d4; }
-  input, button, select { padding: 8px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
-  button { background: #0ea5e9; color: white; cursor: pointer; }
-  button:hover { background: #0284c7; }
-  .month-nav { text-align: center; margin: 10px 0; }
-  .flex { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
-  /* settings */
-  #settingsBtn { 
-    position: fixed; top: 10px; right: 10px; 
-    background: #0ea5e9; border-radius: 50%; width: 40px; height: 40px;
-    font-size: 20px; color: white; text-align: center; line-height: 40px;
-  }
-  #settingsPanel {
-    display: none;
-    position: fixed; top: 60px; right: 10px;
-    background: white; border: 1px solid #ccc; border-radius: 10px;
-    padding: 15px; width: 320px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  }
-  #settingsPanel h3 { margin-top: 0; text-align: center; }
-
-  /* small responsive tweak for settings inputs */
-  @media (max-width:480px) {
-    #settingsPanel { right: 6px; left: 6px; width: auto; }
-  }
-</style>
+  <style>
+    /* Kept your original styling with small responsive tweaks */
+    body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
+    h1, h2 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background: #0ea5e9; color: white; }
+    tr.paid { background: #d4f7d4; }
+    input, button, select { padding: 8px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #0ea5e9; color: white; cursor: pointer; }
+    button:hover { background: #0284c7; }
+    .month-nav { text-align: center; margin: 10px 0; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+    .flex { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+    /* settings */
+    #settingsBtn {
+      position: fixed; top: 10px; right: 10px;
+      background: #0ea5e9; border-radius: 50%; width: 40px; height: 40px;
+      font-size: 20px; color: white; text-align: center; line-height: 40px;
+    }
+    #settingsPanel {
+      display: none;
+      position: fixed; top: 60px; right: 10px;
+      background: white; border: 1px solid #ccc; border-radius: 10px;
+      padding: 15px; width: 340px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    #settingsPanel h3 { margin-top: 0; text-align: center; }
+    .muted { color:#6b7280; font-size:13px; }
+    @media (max-width:640px){ .flex{flex-direction:column} #settingsPanel{left:10px; right:10px; width:auto} }
+  </style>
 </head>
 <body>
-<h1>Λογαριασμοί ανά Μήνα</h1>
+  <h1>Λογαριασμοί ανά Μήνα</h1>
 
-<div class="flex">
-  <input id="title" placeholder="Όνομα λογαριασμού">
-  <select id="commonBills" onchange="fillTitle(this.value)">
-    <option value="">-- Συνηθισμένοι --</option>
-  </select>
-</div>
-
-<div class="flex">
-  <input id="amount" type="number" placeholder="Ποσό €">
-  <select id="monthSelect"></select>
-  <button onclick="addBill()">Προσθήκη</button>
-  <button onclick="exportData()">Εξαγωγή</button>
-</div>
-
-<div class="month-nav" id="monthNav"></div>
-<div id="monthContainer"></div>
-
-<!-- Settings button -->
-<div id="settingsBtn" onclick="toggleSettings()">⚙️</div>
-
-<!-- Settings panel -->
-<div id="settingsPanel">
-  <h3>Ρυθμίσεις</h3>
-
-  <!-- Keep original common controls -->
-  <input id="newCommon" placeholder="Νέος συνηθισμένος">
-  <button onclick="addCommon()">➕ Προσθήκη</button>
-  <button onclick="deleteCommon()">🗑️ Διαγραφή επιλεγμένου</button>
-
-  <hr>
-
-  <!-- Pairing / Group code (6-digit) -->
-  <div style="margin-top:8px; font-weight:600;">Σύνδεση Συσκευών (6-digit)</div>
-  <div style="font-size:13px; color:#666; margin-bottom:8px;">Δημιούργησε κωδικό σε μία συσκευή και εισήγαγε τον στην άλλη.</div>
-
-  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
-    <button id="generateCodeBtn">Δημιουργία Κωδικού</button>
-    <div id="genCodeDisplay" style="font-weight:700; padding-left:8px;"></div>
+  <div class="flex">
+    <input id="title" placeholder="Όνομα λογαριασμού">
+    <select id="commonBills" onchange="fillTitle(this.value)">
+      <option value="">-- Συνηθισμένοι --</option>
+    </select>
   </div>
 
-  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
-    <input id="inputCode" placeholder="Εισάγετε κωδικό">
-    <button id="acceptCodeBtn">Σύνδεση</button>
+  <div class="flex">
+    <input id="amount" type="number" placeholder="Ποσό €">
+    <select id="monthSelect"></select>
+    <button id="addBtn">Προσθήκη</button>
+    <button id="exportBtn">Εξαγωγή</button>
   </div>
 
-  <hr>
+  <div class="month-nav" id="monthNav"></div>
+  <div id="monthContainer"></div>
 
-  <!-- Supabase one-time fields -->
-  <div style="font-weight:600; margin-bottom:6px;">Supabase (one-time)</div>
-  <div style="font-size:13px; color:#666; margin-bottom:6px;">Επικόλλησε εδώ ΜΙΑ φορά τα στοιχεία του project σου (anon key only):</div>
-  <div style="margin-bottom:6px;">
-    <input id="supabaseUrlField" placeholder="SUPABASE_URL (https://... )" style="width:100%">
-  </div>
-  <div>
-    <input id="supabaseKeyField" placeholder="SUPABASE_ANON_KEY (anon key)" style="width:100%">
-  </div>
-  <div style="display:flex; gap:6px; margin-top:8px;">
-    <button id="saveSupabaseBtn" style="flex:1">Αποθήκευση</button>
-    <button id="clearSupabaseBtn" style="flex:1">Καθάρισμα</button>
-  </div>
+  <!-- Settings button -->
+  <div id="settingsBtn" onclick="toggleSettings()">⚙️</div>
 
-  <hr>
+  <!-- Settings panel -->
+  <div id="settingsPanel" aria-hidden="true">
+    <h3>Ρυθμίσεις</h3>
 
-  <div style="font-size:12px; color:#666;">
-    Προαιρετικά: Αν έχεις endpoints (Edge Functions) μπορείς να τα επικολλήσεις εδώ:
+    <!-- Common items -->
+    <input id="newCommon" placeholder="Νέος συνηθισμένος">
+    <button id="addCommonBtn">➕ Προσθήκη</button>
+    <button id="delCommonBtn">🗑️ Διαγραφή επιλεγμένου</button>
+
+    <hr>
+
+    <!-- Pairing -->
+    <div style="margin-top:8px; font-weight:600;">Σύνδεση Συσκευών (6-digit)</div>
+    <div class="muted">Δημιούργησε κωδικό σε μία συσκευή και εισήγαγε τον στην άλλη.</div>
+    <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
+      <button id="generateCodeBtn">Δημιουργία Κωδικού</button>
+      <div id="genCodeDisplay" style="font-weight:700; padding-left:8px;"></div>
+    </div>
+    <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
+      <input id="inputCode" placeholder="Εισάγετε κωδικό">
+      <button id="acceptCodeBtn">Σύνδεση</button>
+    </div>
+
+    <hr>
+
+    <!-- Supabase (one-time) -->
+    <div style="font-weight:600; margin-bottom:6px;">Supabase (one-time)</div>
+    <div class="muted">Επικόλλησε εδώ ΜΙΑ φορά το SUPABASE URL & ANON key (ή κόλλησέ τα απευθείας στον κώδικα πάνω).</div>
+
+    <div style="margin-top:6px;">
+      <input id="supabaseUrlField" placeholder="SUPABASE_URL (https://... )" style="width:100%">
+    </div>
+    <div style="margin-top:6px;">
+      <input id="supabaseKeyField" placeholder="SUPABASE_ANON_KEY (anon key)" style="width:100%">
+    </div>
+
+    <div style="display:flex; gap:6px; margin-top:8px;">
+      <button id="saveSupabaseBtn" style="flex:1">Αποθήκευση</button>
+      <button id="clearSupabaseBtn" style="flex:1">Καθάρισμα</button>
+    </div>
+
+    <hr>
+
+    <div class="muted">Edge functions (προαιρετικά)</div>
+    <div style="margin-top:6px;"><input id="fnGenerateField" placeholder="GENERATE_URL (optional)" style="width:100%"></div>
+    <div style="margin-top:6px;"><input id="fnAcceptField" placeholder="ACCEPT_URL (optional)" style="width:100%"></div>
+
+    <div class="muted" style="margin-top:8px;">Αποθηκεύονται στο localStorage — βάλ' τα μία φορά.</div>
   </div>
-  <div style="margin-top:6px;">
-    <input id="fnGenerateField" placeholder="Function URL: /generate (optional)" style="width:100%">
-  </div>
-  <div style="margin-top:6px;">
-    <input id="fnAcceptField" placeholder="Function URL: /accept (optional)" style="width:100%">
-  </div>
-  <div style="margin-top:8px; font-size:12px; color:#666;">Τιμές αποθηκεύονται στο localStorage.</div>
-</div>
 
 <script>
+/* ========================================================================
+   COMPLETE FILE - placeholders below
+   Replace the placeholder strings with your SUPABASE_URL / SUPABASE_ANON_KEY
+   and, optionally, GENERATE/ACCEPT function URLs.
+   ======================================================================== */
+
+/* ======= 1) PLACEHOLDERS - edit ONCE (or use settings panel) ======= */
+// Option A: paste values here (preferred if you don't want to open settings)
+const SUPABASE_URL = "";      // e.g. "https://orncnzpoavqxtzrzgwrv.supabase.co"
+const SUPABASE_ANON_KEY = ""; // e.g. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+const GENERATE_URL = "";      // optional, e.g. "https://.../functions/v1/generate"
+const ACCEPT_URL = "";        // optional, e.g. "https://.../functions/v1/accept"
+/* =================================================================== */
+
+/* ---------------- init supabase client if placeholders used or saved in settings ---------------- */
+let supabaseClient = null;
+function initSupabaseIfConfigured() {
+  const url = SUPABASE_URL || localStorage.getItem('BILSS_SUPABASE_URL') || '';
+  const key = SUPABASE_ANON_KEY || localStorage.getItem('BILSS_SUPABASE_KEY') || '';
+  if (url && key && window.supabase) {
+    try {
+      supabaseClient = supabase.createClient(url, key);
+      console.log('Supabase initialized');
+      // if group existed, auto-join
+      const saved = localStorage.getItem('bilss_group_code');
+      if (saved) joinGroupInternal(saved).catch(()=>{});
+    } catch (e) { console.warn('supabase init failed', e); supabaseClient = null; }
+  }
+}
+initSupabaseIfConfigured();
+
+/* ---------------------- Your original frontend logic (kept) ---------------------- */
 const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
 const storageKey = "myBills";
 const commonKey = "myCommonBills";
-
-// defaultCommon removed as requested (start empty)
-const defaultCommon = [];
+const defaultCommon = []; // removed defaults as requested
 
 let bills = JSON.parse(localStorage.getItem(storageKey) || "[]");
 let commonBills = JSON.parse(localStorage.getItem(commonKey) || JSON.stringify(defaultCommon));
 let currentMonth = monthNames[new Date().getMonth()];
 
-// populate months
+/* populate monthSelect */
 const monthSelect = document.getElementById('monthSelect');
-monthNames.forEach(m => { 
-  const opt = document.createElement('option'); 
-  opt.value = m; 
-  opt.textContent = m; 
-  monthSelect.appendChild(opt); 
+monthNames.forEach(m => {
+  const opt = document.createElement('option'); opt.value = m; opt.textContent = m; monthSelect.appendChild(opt);
 });
 monthSelect.value = currentMonth;
 
-// populate common dropdown
+/* common rendering */
 function renderCommon() {
   const select = document.getElementById("commonBills");
   select.innerHTML = '<option value="">-- Συνηθισμένοι --</option>';
   commonBills.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c;
-    opt.textContent = c;
-    select.appendChild(opt);
+    const opt = document.createElement("option"); opt.value = c; opt.textContent = c; select.appendChild(opt);
   });
-
-  // also fill delete select inside settings if present (keep compatibility)
-  const del = document.getElementById('delCommonSelect');
-  if (del) {
-    del.innerHTML = '';
-    commonBills.forEach(c => {
-      const dopt = document.createElement('option'); dopt.value = c; dopt.textContent = c; del.appendChild(dopt);
-    });
-  }
 }
 renderCommon();
 
-function fillTitle(val) {
-  if (val) {
-    document.getElementById("title").value = val;
+/* add / delete common */
+document.getElementById('addCommonBtn').addEventListener('click', () => {
+  const v = document.getElementById('newCommon').value.trim();
+  if (!v) return;
+  if (!commonBills.includes(v)) {
+    commonBills.push(v); localStorage.setItem(commonKey, JSON.stringify(commonBills)); renderCommon();
+    syncCommonToServer().catch(()=>{});
   }
-}
+  document.getElementById('newCommon').value = '';
+});
+document.getElementById('delCommonBtn').addEventListener('click', () => {
+  const sel = document.getElementById('commonBills'); const val = sel.value; if (!val) return;
+  commonBills = commonBills.filter(x=>x!==val); localStorage.setItem(commonKey, JSON.stringify(commonBills)); renderCommon();
+  syncCommonToServer().catch(()=>{});
+});
 
-function addCommon() {
-  const val = document.getElementById("newCommon").value.trim();
-  if (!val) return;
-  if (!commonBills.includes(val)) {
-    commonBills.push(val);
-    localStorage.setItem(commonKey, JSON.stringify(commonBills));
-    renderCommon();
-  }
-  document.getElementById("newCommon").value = '';
-}
+/* local save */
+function save() { localStorage.setItem(storageKey, JSON.stringify(bills)); render(); }
 
-function deleteCommon() {
-  const select = document.getElementById("commonBills");
-  const val = select.value;
-  if (!val) return;
-  commonBills = commonBills.filter(c => c !== val);
-  localStorage.setItem(commonKey, JSON.stringify(commonBills));
-  renderCommon();
-}
-
-function save() {
-  localStorage.setItem(storageKey, JSON.stringify(bills));
-  render();
-}
-
+/* add bill - local-first then push to server if possible */
+document.getElementById('addBtn').addEventListener('click', addBill);
 function addBill() {
-  const title = document.getElementById("title").value;
+  const title = document.getElementById("title").value.trim();
   const amount = parseFloat(document.getElementById("amount").value);
   const month = document.getElementById("monthSelect").value;
   if (!title || !amount || !month) { alert("Συμπλήρωσε όλα τα πεδία!"); return; }
-  bills.push({ id: Date.now(), title, amount, month, paid: false });
+  const localId = Date.now();
+  const newBill = { id: localId, title, amount, month, paid: false, synced: false };
+  bills.push(newBill);
   save();
-  document.getElementById("title").value = '';
-  document.getElementById("amount").value = '';
-  document.getElementById("commonBills").value = '';
+  document.getElementById("title").value = ''; document.getElementById("amount").value = ''; document.getElementById("commonBills").value = '';
+
+  // push to server if supabaseClient & groupCode available
+  if (supabaseClient && groupCode) {
+    supabaseClient.from('bills').insert([{ group_code: groupCode, title, amount, month, paid:false }]).catch(()=>{});
+  }
 }
 
-function togglePaid(id) {
+/* toggle paid */
+window.togglePaid = function(id) {
   bills = bills.map(b => b.id === id ? { ...b, paid: !b.paid } : b);
   save();
-}
+  if (supabaseClient && groupCode) {
+    // best-effort find server row then update
+    const local = bills.find(x=>x.id===id);
+    if (!local) return;
+    supabaseClient.from('bills').select('id,paid').eq('group_code', groupCode).eq('title', local.title).eq('amount', local.amount).eq('month', local.month).limit(1)
+      .then(res => {
+        if (res && res.data && res.data.length>0) {
+          const row = res.data[0];
+          supabaseClient.from('bills').update({ paid: !row.paid }).eq('id', row.id).catch(()=>{});
+        }
+      }).catch(()=>{});
+  }
+};
 
-function deleteBill(id) {
+/* delete bill */
+window.deleteBill = function(id) {
+  const maybe = bills.find(b => b.id === id);
   bills = bills.filter(b => b.id !== id);
   save();
-}
+  if (supabaseClient && groupCode && maybe) {
+    supabaseClient.from('bills').select('id').eq('group_code', groupCode).eq('title', maybe.title).eq('amount', maybe.amount).eq('month', maybe.month).limit(1)
+      .then(res => {
+        if (res && res.data && res.data.length>0) {
+          supabaseClient.from('bills').delete().eq('id', res.data[0].id).catch(()=>{});
+        }
+      }).catch(()=>{});
+  }
+};
 
-function changeMonth(month) {
-  currentMonth = month;
-  monthSelect.value = month;
-  render();
-}
+function changeMonth(month) { currentMonth = month; monthSelect.value = month; render(); }
 
-/* ---------- render & average ---------- */
+/* render + average */
 function render() {
-  const container = document.getElementById("monthContainer");
-  container.innerHTML = '';
-
-  // Months navigation
+  const container = document.getElementById("monthContainer"); container.innerHTML = '';
   const monthsWithBills = [...new Set(bills.map(b => b.month))];
-  const nav = document.getElementById('monthNav');
-  nav.innerHTML = '';
+  const nav = document.getElementById('monthNav'); nav.innerHTML = '';
   monthsWithBills.forEach(m => {
-    const btn = document.createElement('button');
-    btn.textContent = m;
-    btn.onclick = () => changeMonth(m);
+    const btn = document.createElement('button'); btn.textContent = m; btn.onclick = () => changeMonth(m);
     if (m === currentMonth) btn.style.background = '#0284c7';
     nav.appendChild(btn);
   });
@@ -260,18 +270,12 @@ function render() {
     return;
   }
 
-  const h2 = document.createElement('h2');
-  h2.textContent = currentMonth;
-  container.appendChild(h2);
-
-  const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>';
-  table.appendChild(thead);
+  const h2 = document.createElement('h2'); h2.textContent = currentMonth; container.appendChild(h2);
+  const table = document.createElement('table'); const thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>'; table.appendChild(thead);
   const tbody = document.createElement('tbody');
   monthBills.forEach(b => {
-    const row = document.createElement('tr');
-    if (b.paid) row.classList.add('paid');
+    const row = document.createElement('tr'); if (b.paid) row.classList.add('paid');
     row.innerHTML = `
       <td><input type="checkbox" ${b.paid ? 'checked' : ''} onclick="togglePaid(${b.id})"></td>
       <td>${escapeHtml(b.title)}</td>
@@ -280,214 +284,137 @@ function render() {
     `;
     tbody.appendChild(row);
   });
-  table.appendChild(tbody);
-  container.appendChild(table);
+  table.appendChild(tbody); container.appendChild(table);
 
-  // compute and show average:
+  // average
   const avg = monthBills.length ? (monthBills.reduce((s,x)=>s+Number(x.amount),0)/monthBills.length) : 0;
   const avgDiv = document.createElement('div');
-  avgDiv.style.textAlign = 'center';
-  avgDiv.style.marginTop = '8px';
-  avgDiv.style.color = '#0ea5e9';
-  avgDiv.textContent = `Μέσος όρος: ${avg.toFixed(2)} €`;
-  container.appendChild(avgDiv);
+  avgDiv.style.textAlign = 'center'; avgDiv.style.marginTop = '8px'; avgDiv.style.color = '#0ea5e9';
+  avgDiv.textContent = `Μέσος όρος: ${avg.toFixed(2)} €`; container.appendChild(avgDiv);
 }
 
 monthSelect.onchange = () => changeMonth(monthSelect.value);
 render();
 
-function exportData() {
+/* export */
+document.getElementById('exportBtn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(bills)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'logariasmoi.json';
-  a.click();
-}
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'logariasmoi.json'; a.click();
+});
 
-// toggle settings panel
+/* settings toggle */
 function toggleSettings() {
   const panel = document.getElementById("settingsPanel");
   panel.style.display = panel.style.display === "block" ? "none" : "block";
 }
 
-// helper to escape HTML
+/* html escape helper */
 function escapeHtml(unsafe) {
-  return String(unsafe)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-/* -------------------- NEW: pairing + supabase minimal glue --------------------
-   These additions are minimal and do not modify your original functions.
-   - You must paste your SUPABASE_URL and SUPABASE_ANON_KEY once in the panel fields and click "Αποθήκευση".
-   - If you don't paste them, the app works local-only exactly like before.
-   - The generate/accept function fields are optional (left for advanced use).
-   --------------------------------------------------------------------------- */
+/* -------------------- Supabase group + realtime + functions -------------------- */
+let groupCode = localStorage.getItem('bilss_group_code') || null;
+let connected = false;
 
-// Supabase placeholders saved in localStorage (one-time)
-const SUPABASE_URL_KEY = 'BILSS_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'BILSS_SUPABASE_ANON';
-const FN_GENERATE_KEY = 'BILSS_FN_GENERATE';
-const FN_ACCEPT_KEY = 'BILSS_FN_ACCEPT';
-
+/* settings fields */
 const supabaseUrlField = document.getElementById('supabaseUrlField');
 const supabaseKeyField = document.getElementById('supabaseKeyField');
 const fnGenerateField = document.getElementById('fnGenerateField');
 const fnAcceptField = document.getElementById('fnAcceptField');
 
-// load saved into inputs
-supabaseUrlField.value = localStorage.getItem(SUPABASE_URL_KEY) || '';
-supabaseKeyField.value = localStorage.getItem(SUPABASE_ANON_KEY) || '';
-fnGenerateField.value = localStorage.getItem(FN_GENERATE_KEY) || '';
-fnAcceptField.value = localStorage.getItem(FN_ACCEPT_KEY) || '';
+supabaseUrlField.value = localStorage.getItem('BILSS_SUPABASE_URL') || SUPABASE_URL || '';
+supabaseKeyField.value = localStorage.getItem('BILSS_SUPABASE_KEY') || SUPABASE_ANON_KEY || '';
+fnGenerateField.value = localStorage.getItem('BILSS_FN_GENERATE') || GENERATE_URL || '';
+fnAcceptField.value = localStorage.getItem('BILSS_FN_ACCEPT') || ACCEPT_URL || '';
 
-let supabaseClient = null;
-let groupCode = localStorage.getItem('bilss_group_code') || null;
-let connected = false;
-
-function setStatus(text){
-  const s = document.getElementById('genCodeDisplay') || document.getElementById('status');
-  if (s) s.textContent = text;
-}
-
-// save supabase details (one-time)
 document.getElementById('saveSupabaseBtn').addEventListener('click', () => {
-  const u = supabaseUrlField.value.trim();
-  const k = supabaseKeyField.value.trim();
-  const fg = fnGenerateField.value.trim();
-  const fa = fnAcceptField.value.trim();
+  const u = supabaseUrlField.value.trim(); const k = supabaseKeyField.value.trim();
+  const fg = fnGenerateField.value.trim(); const fa = fnAcceptField.value.trim();
   if (!u || !k) { alert('Πρέπει να επικολλήσεις URL & ANON key'); return; }
-  localStorage.setItem(SUPABASE_URL_KEY, u);
-  localStorage.setItem(SUPABASE_ANON_KEY, k);
-  localStorage.setItem(FN_GENERATE_KEY, fg);
-  localStorage.setItem(FN_ACCEPT_KEY, fa);
-  initSupabase(u, k);
+  localStorage.setItem('BILSS_SUPABASE_URL', u); localStorage.setItem('BILSS_SUPABASE_KEY', k);
+  localStorage.setItem('BILSS_FN_GENERATE', fg); localStorage.setItem('BILSS_FN_ACCEPT', fa);
+  try { supabaseClient = supabase.createClient(u, k); setStatus('Supabase αρχικοποιήθηκε'); }
+  catch(e){ console.warn(e); setStatus('Σφάλμα init'); }
   alert('Αποθηκεύτηκε (μία φορά)');
 });
 
-// clear supabase details
 document.getElementById('clearSupabaseBtn').addEventListener('click', () => {
-  localStorage.removeItem(SUPABASE_URL_KEY);
-  localStorage.removeItem(SUPABASE_ANON_KEY);
-  localStorage.removeItem(FN_GENERATE_KEY);
-  localStorage.removeItem(FN_ACCEPT_KEY);
-  supabaseUrlField.value = '';
-  supabaseKeyField.value = '';
-  fnGenerateField.value = '';
-  fnAcceptField.value = '';
+  localStorage.removeItem('BILSS_SUPABASE_URL'); localStorage.removeItem('BILSS_SUPABASE_KEY');
+  localStorage.removeItem('BILSS_FN_GENERATE'); localStorage.removeItem('BILSS_FN_ACCEPT');
+  supabaseUrlField.value = ''; supabaseKeyField.value = ''; fnGenerateField.value = ''; fnAcceptField.value = '';
   alert('Καθαρίστηκε');
 });
 
-// init if values exist
-const savedUrl = localStorage.getItem(SUPABASE_URL_KEY);
-const savedKey = localStorage.getItem(SUPABASE_ANON_KEY);
-if (savedUrl && savedKey) initSupabase(savedUrl, savedKey);
+function setStatus(t) { const s = document.getElementById('genCodeDisplay') || document.getElementById('status'); if (s) s.textContent = t; }
 
-// initialize Supabase client (minimal)
-function initSupabase(url, key){
-  try {
-    // supabase js from CDN exposes `supabase`
-    supabaseClient = supabase.createClient(url, key);
-    setStatus('Supabase init');
-    // attempt to join existing groupCode if present
-    if (groupCode) joinGroup(groupCode);
-  } catch (e) {
-    console.warn('Supabase init failed', e);
-    supabaseClient = null;
-  }
-}
-
-// generate 6-digit code
+/* generate code (prefer call to function if provided) */
 document.getElementById('generateCodeBtn').addEventListener('click', async () => {
-  const code = String(Math.floor(100000 + Math.random() * 900000));
-  document.getElementById('genCodeDisplay').textContent = code + ' ⏳';
-  groupCode = code;
-  localStorage.setItem('bilss_group_code', groupCode);
-
-  if (supabaseClient) {
-    try {
-      // create group row in groups table (if exists)
-      await supabaseClient.from('groups').upsert([{ code, created_at: new Date().toISOString() }], { onConflict: ['code'] });
-      await joinGroup(code);
-    } catch (e) {
-      console.warn('group create fail', e);
-      setStatus('Group create failed');
-    }
-  } else {
-    setStatus('Local group: ' + code);
-  }
-
-  // optional call to generate function if provided
-  const fg = localStorage.getItem(FN_GENERATE_KEY) || fnGenerateField.value.trim();
+  const fg = localStorage.getItem('BILSS_FN_GENERATE') || fnGenerateField.value.trim() || GENERATE_URL || '';
   if (fg) {
     try {
-      fetch(fg, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ device_id: cryptoRandomUUID(), code }) }).catch(()=>{});
-    } catch(e){}
+      const res = await fetch(fg, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({}) });
+      const data = await res.json();
+      if (data && data.code) { await joinGroupInternal(data.code); document.getElementById('genCodeDisplay').textContent = data.code + ' ⏳'; return; }
+    } catch(e){ console.warn('fn generate failed', e); }
   }
+  // fallback local generation
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  await joinGroupInternal(code);
+  document.getElementById('genCodeDisplay').textContent = code + ' ⏳';
 });
 
-// accept/join code
+/* accept/join code (prefer call to function if provided) */
 document.getElementById('acceptCodeBtn').addEventListener('click', async () => {
-  const code = document.getElementById('inputCode').value.trim();
-  if (!code) return alert('Δώσε κωδικό');
-  await joinGroup(code);
+  const code = document.getElementById('inputCode').value.trim(); if (!code) return alert('Δώσε κωδικό');
+  const fa = localStorage.getItem('BILSS_FN_ACCEPT') || fnAcceptField.value.trim() || ACCEPT_URL || '';
+  if (fa) {
+    try {
+      const res = await fetch(fa, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ code }) });
+      const data = await res.json();
+      if (data && data.success) { await joinGroupInternal(code); alert('Σύνδεση επιτυχής'); return; }
+      else { alert('Ο κωδικός δεν βρέθηκε'); return; }
+    } catch(e){ console.warn('fn accept failed', e); }
+  }
+  // fallback: direct join
+  await joinGroupInternal(code);
 });
 
-async function joinGroup(code) {
-  if (!code) return;
-  groupCode = code;
-  localStorage.setItem('bilss_group_code', groupCode);
-  setStatus('Joining ' + code + ' ...');
-
-  if (!supabaseClient) {
-    setStatus('Local group: ' + code);
-    document.getElementById('genCodeDisplay').textContent = code;
-    return;
-  }
-
-  try {
-    // ensure group exists
-    await supabaseClient.from('groups').upsert([{ code, created_at: new Date().toISOString() }], { onConflict: ['code'] });
-
-    // load server bills for group
-    const { data: rows, error } = await supabaseClient.from('bills').select('*').eq('group_code', code);
-    if (error) console.warn('load bills error', error);
-    if (rows && rows.length) {
-      bills = rows.map(r => ({ id: r.id, title: r.title, amount: Number(r.amount), month: r.month, paid: !!r.paid }));
-      localStorage.setItem(storageKey, JSON.stringify(bills));
-      render();
-    } else {
-      // push local items if server empty
-      await pushLocalToServer();
-    }
-
-    // subscribe realtime
-    setupRealtime(code);
-    connected = true;
-    setStatus('Connected: ' + code);
-    document.getElementById('genCodeDisplay').textContent = code + ' ✓';
-  } catch (e) {
-    console.warn('joinGroup error', e);
-    setStatus('Join failed');
+/* join group internals - loads server data (server wins), subscribes realtime */
+async function joinGroupInternal(code) {
+  groupCode = code; localStorage.setItem('bilss_group_code', groupCode);
+  setStatus('Joining ' + groupCode + '...');
+  if (supabaseClient) {
+    try {
+      try { await supabaseClient.from('groups').upsert([{ code, created_at: new Date().toISOString() }], { onConflict: ['code'] }); } catch(e){}
+      const { data: rows, error } = await supabaseClient.from('bills').select('*').eq('group_code', groupCode);
+      if (!error && rows && rows.length) {
+        bills = rows.map(r => ({ id: r.id, title: r.title, amount: Number(r.amount), month: r.month, paid: !!r.paid }));
+        localStorage.setItem(storageKey, JSON.stringify(bills)); render();
+      } else {
+        // no server rows -> push local
+        pushLocalToServer().catch(()=>{});
+      }
+      setupRealtimeSubscription(groupCode); connected = true; setStatus('Connected: ' + groupCode);
+      document.getElementById('genCodeDisplay').textContent = groupCode + (supabaseClient ? ' ✓' : ' (local)');
+    } catch(e) { console.warn('joinGroupInternal', e); setStatus('Join failed'); }
+  } else {
+    setStatus('Local group: ' + groupCode); document.getElementById('genCodeDisplay').textContent = groupCode + ' (local)';
   }
 }
 
-// push local numeric-id bills to server
+/* push local numeric-id bills to server */
 async function pushLocalToServer() {
   if (!supabaseClient || !groupCode) return;
   const unsynced = bills.filter(b => typeof b.id === 'number');
   for (const b of unsynced) {
-    try {
-      await supabaseClient.from('bills').insert([{ group_code: groupCode, title: b.title, amount: b.amount, month: b.month, paid: b.paid }]);
-    } catch(e) { console.warn('push local', e); }
+    try { await supabaseClient.from('bills').insert([{ group_code: groupCode, title: b.title, amount: b.amount, month: b.month, paid: b.paid }]); }
+    catch(e){ console.warn('pushLocalToServer error', e); }
   }
 }
 
-// setup realtime (listens for inserts/updates/deletes on group_code)
-function setupRealtime(code) {
+/* realtime subscription using supabase channels */
+function setupRealtimeSubscription(code) {
   if (!supabaseClient || !code) return;
   try {
     if (window._bilssChannel && supabaseClient.removeChannel) {
@@ -498,45 +425,6 @@ function setupRealtime(code) {
         const r = payload.new;
         bills = bills.filter(b => b.id !== r.id);
         bills.push({ id: r.id, title: r.title, amount: Number(r.amount), month: r.month, paid: !!r.paid });
-        localStorage.setItem(storageKey, JSON.stringify(bills));
-        render();
+        localStorage.setItem(storageKey, JSON.stringify(bills)); render();
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bills', filter: `group_code=eq.${code}` }, payload => {
-        const r = payload.new;
-        bills = bills.map(b => b.id === r.id ? { id: r.id, title: r.title, amount: Number(r.amount), month: r.month, paid: !!r.paid } : b);
-        localStorage.setItem(storageKey, JSON.stringify(bills));
-        render();
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bills', filter: `group_code=eq.${code}` }, payload => {
-        const r = payload.old;
-        bills = bills.filter(b => b.id !== r.id);
-        localStorage.setItem(storageKey, JSON.stringify(bills));
-        render();
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') setStatus('Realtime connected');
-      });
-
-    window._bilssChannel = ch;
-  } catch(e) { console.warn('realtime error', e); }
-}
-
-// helper UUID
-function cryptoRandomUUID(){
-  if (crypto && crypto.randomUUID) return crypto.randomUUID();
-  return 'id-' + Date.now() + '-' + Math.floor(Math.random()*1000000);
-}
-
-// expose manual init for advanced use if user prefers to set keys in code
-window.SUPABASE_MANUAL_INIT = function(url, key, fnGen, fnAcc){
-  localStorage.setItem(SUPABASE_URL_KEY, url);
-  localStorage.setItem(SUPABASE_ANON_KEY, key);
-  if (fnGen) localStorage.setItem(FN_GENERATE_KEY, fnGen);
-  if (fnAcc) localStorage.setItem(FN_ACCEPT_KEY, fnAcc);
-  initSupabase(url, key);
-};
-
-// end of additions
-</script>
-</body>
-</html>
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', tab
