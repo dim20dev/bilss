@@ -1,432 +1,532 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Λογαριασμοί ανά Μήνα</title>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0SY6YM8NJN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-  <!-- Supabase client (UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  gtag('config', 'G-0SY6YM8NJN');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Λογαριασμοί ανά Μήνα</title>
+<style>
+  body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
+  h1, h2 { text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+  th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+  th { background: #0ea5e9; color: white; }
+  tr.paid { background: #d4f7d4; }
+  input, button, select { padding: 8px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
+  button { background: #0ea5e9; color: white; cursor: pointer; }
+  button:hover { background: #0284c7; }
+  .month-nav { text-align: center; margin: 10px 0; }
+  .flex { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+  /* settings */
+  #settingsBtn { 
+    position: fixed; top: 10px; right: 10px; 
+    background: #0ea5e9; border-radius: 50%; width: 40px; height: 40px;
+    font-size: 20px; color: white; text-align: center; line-height: 40px;
+  }
+  #settingsPanel {
+    display: none;
+    position: fixed; top: 60px; right: 10px;
+    background: white; border: 1px solid #ccc; border-radius: 10px;
+    padding: 15px; width: 320px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  #settingsPanel h3 { margin-top: 0; text-align: center; }
 
-  <style>
-    /* Visual polish while keeping your original layout */
-    :root {
-      --primary: #0ea5e9;
-      --accent: #0284c7;
-      --muted: #6b7280;
-      --bg: #f4f6fb;
-      --card: #fff;
-      --radius: 12px;
-    }
-    * { box-sizing: border-box; }
-    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; margin: 18px; background: var(--bg); color:#0f172a; }
-    .container { max-width: 920px; margin: 0 auto; }
-    header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-    h1 { margin:6px 0; font-size:20px; }
-    .card { background:var(--card); border-radius:var(--radius); padding:14px; box-shadow: 0 8px 18px rgba(2,6,23,0.06); }
-    .flex { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; margin-bottom:10px; }
-    input, select, button { padding:10px 12px; border-radius:8px; border:1px solid #e6edf3; font-size:14px; }
-    input[type="number"]{ width:120px; }
-    button { background:var(--primary); color:white; border:none; cursor:pointer; border-radius:8px; }
-    button.ghost { background:transparent; color:var(--primary); border:1px solid rgba(14,165,233,0.12); }
-    .month-nav { text-align:center; margin:12px 0; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
-    .month-nav button { background:transparent; color:var(--muted); border:1px solid transparent; padding:6px 10px; border-radius:8px; cursor:pointer; }
-    .month-nav button.active { background:var(--primary); color:white; border-color:var(--accent); }
-    table { width:100%; border-collapse:collapse; margin-top:10px; background:transparent; }
-    th, td { padding:12px; text-align:center; border-bottom:1px solid #f0f4f8; }
-    tr.paid { background:#e9fbf0; }
-    footer { text-align:center; margin-top:14px; color:var(--muted); font-size:13px; }
-    #settingsBtn { position:fixed; top:14px; right:14px; background:var(--primary); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; z-index:999; box-shadow:0 8px 18px rgba(2,6,23,0.12); }
-    #settingsPanel { display:none; position:fixed; top:72px; right:14px; width:360px; background:var(--card); padding:12px; border-radius:12px; box-shadow:0 14px 34px rgba(2,6,23,0.12); z-index:999; }
-    #settingsPanel h3 { margin-top:0; text-align:center; }
-    .settings-row { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
-    pre.placeholder { background:#f8fafc; padding:8px; border-radius:8px; border:1px solid #eef2f7; font-size:12px; overflow:auto; }
-    @media (max-width:640px) {
-      .flex { flex-direction:column; }
-      input, select, button { width:100%; }
-      #settingsPanel { left:10px; right:10px; width:auto; }
-    }
-  </style>
+  /* small responsive tweak for settings inputs */
+  @media (max-width:480px) {
+    #settingsPanel { right: 6px; left: 6px; width: auto; }
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1 id="appTitle">Λογαριασμοί ανά Μήνα</h1>
-        <div id="subTitle" style="color:var(--muted); font-size:13px;">Offline + cloud sync</div>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <label style="font-size:13px; color:var(--muted);">Γλώσσα</label>
-        <select id="langSelect" style="padding:8px; border-radius:8px;">
-          <option value="el">Ελληνικά</option>
-          <option value="en">English</option>
-        </select>
-      </div>
-    </header>
+<h1>Λογαριασμοί ανά Μήνα</h1>
 
-    <!-- preserved original UI -->
-    <div class="card">
-      <div class="flex">
-        <input id="title" placeholder="Όνομα λογαριασμού">
-        <select id="commonBills" onchange="fillTitle(this.value)">
-          <option value="">-- Συνηθισμένοι --</option>
-        </select>
-      </div>
+<div class="flex">
+  <input id="title" placeholder="Όνομα λογαριασμού">
+  <select id="commonBills" onchange="fillTitle(this.value)">
+    <option value="">-- Συνηθισμένοι --</option>
+  </select>
+</div>
 
-      <div class="flex">
-        <input id="amount" type="number" placeholder="Ποσό €">
-        <select id="monthSelect"></select>
-        <button id="addBtn">Προσθήκη</button>
-        <button class="ghost" id="exportBtn">Εξαγωγή</button>
-      </div>
-    </div>
+<div class="flex">
+  <input id="amount" type="number" placeholder="Ποσό €">
+  <select id="monthSelect"></select>
+  <button onclick="addBill()">Προσθήκη</button>
+  <button onclick="exportData()">Εξαγωγή</button>
+</div>
 
-    <div class="month-nav" id="monthNav"></div>
-    <div id="monthContainer"></div>
+<div class="month-nav" id="monthNav"></div>
+<div id="monthContainer"></div>
 
-    <footer class="card" style="margin-top:14px;">
-      <div style="display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap;">
-        <div style="font-size:13px; color:var(--muted);">Συγχρονισμός: Αυτόματος (Realtime)</div>
-        <div id="status" style="font-size:13px; color:var(--muted);"></div>
-      </div>
-    </footer>
+<!-- Settings button -->
+<div id="settingsBtn" onclick="toggleSettings()">⚙️</div>
+
+<!-- Settings panel -->
+<div id="settingsPanel">
+  <h3>Ρυθμίσεις</h3>
+
+  <!-- Keep original common controls -->
+  <input id="newCommon" placeholder="Νέος συνηθισμένος">
+  <button onclick="addCommon()">➕ Προσθήκη</button>
+  <button onclick="deleteCommon()">🗑️ Διαγραφή επιλεγμένου</button>
+
+  <hr>
+
+  <!-- Pairing / Group code (6-digit) -->
+  <div style="margin-top:8px; font-weight:600;">Σύνδεση Συσκευών (6-digit)</div>
+  <div style="font-size:13px; color:#666; margin-bottom:8px;">Δημιούργησε κωδικό σε μία συσκευή και εισήγαγε τον στην άλλη.</div>
+
+  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
+    <button id="generateCodeBtn">Δημιουργία Κωδικού</button>
+    <div id="genCodeDisplay" style="font-weight:700; padding-left:8px;"></div>
   </div>
 
-  <!-- settings -->
-  <div id="settingsBtn" onclick="toggleSettings()">⚙️</div>
-
-  <div id="settingsPanel" class="card" aria-hidden="true">
-    <h3 id="settingsTitle">Ρυθμίσεις</h3>
-
-    <div style="font-weight:600; margin-bottom:6px;">Σύνδεση με 6-digit code</div>
-    <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">Δημιούργησε κωδικό ή εισάγεις έναν για να μοιραστείς το group.</div>
-
-    <div class="settings-row">
-      <button id="genCodeBtn">Δημιουργία κωδικού</button>
-      <div id="codeDisplay" style="font-weight:700; padding-left:8px;"></div>
-    </div>
-
-    <div class="settings-row">
-      <input id="codeInput" placeholder="Εισάγετε κωδικό">
-      <button id="joinCodeBtn">Σύνδεση</button>
-    </div>
-
-    <hr style="border:none; height:1px; background:#f0f4f8; margin:10px 0;">
-
-    <div style="font-weight:600; margin-bottom:6px;">Συνήθη</div>
-    <div class="settings-row">
-      <input id="newCommon" placeholder="Νέος συνηθισμένος">
-      <button id="addCommonBtn">➕</button>
-    </div>
-    <div class="settings-row">
-      <select id="delCommonSelect" style="flex:1;"></select>
-      <button id="delCommonBtn">🗑️</button>
-    </div>
-
-    <hr style="border:none; height:1px; background:#f0f4f8; margin:10px 0;">
-
-    <div style="font-weight:600; margin-bottom:6px;">Supabase (one-time)</div>
-    <div style="font-size:13px; color:var(--muted); margin-bottom:6px;">Επικόλλησε εδώ ΜΙΑ φορά τα στοιχεία του project σου (anon key only):</div>
-
-    <div style="margin-bottom:6px;">
-      <input id="supabaseUrl" placeholder="SUPABASE_URL (https://...)" />
-    </div>
-    <div>
-      <input id="supabaseKey" placeholder="SUPABASE_ANON_KEY (anon public key)" />
-    </div>
-
-    <div style="margin-top:8px; display:flex; gap:8px;">
-      <button id="saveSettingsBtn" style="flex:1;">Αποθήκευση</button>
-      <button id="clearSettingsBtn" style="flex:1;" class="ghost">Καθάρισμα</button>
-    </div>
-
-    <hr style="border:none; height:1px; background:#f0f4f8; margin:10px 0;">
-
-    <div style="font-size:12px; color:var(--muted);">
-      Προαιρετικά: αν έχεις Edge Function URLs, επικόλλησέ τα στα πεδία κάτω (λειτουργούν αν τα χρειαστείς).
-    </div>
-
-    <div style="margin-top:8px;">
-      <input id="fnGenerate" placeholder="Function URL: /generate (optional)" />
-    </div>
-    <div style="margin-top:6px;">
-      <input id="fnAccept" placeholder="Function URL: /accept (optional)" />
-    </div>
-
-    <div style="margin-top:8px; font-size:12px; color:var(--muted);">Οι τιμές αποθηκεύονται στο localStorage του browser σου.</div>
+  <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
+    <input id="inputCode" placeholder="Εισάγετε κωδικό">
+    <button id="acceptCodeBtn">Σύνδεση</button>
   </div>
 
-  <script>
-  /**************************************************************************
-   * Full single-file app:
-   * - local-first storage (localStorage)
-   * - optional Supabase realtime group sync (group_code)
-   * - one-time settings: SUPABASE_URL, SUPABASE_ANON_KEY, optional function URLs
-   * - 6-digit group code: generate/join
-   * - monthly average display
-   * - bilingual: el / en
-   *
-   * IMPORTANT: Paste your SUPABASE_URL and SUPABASE_ANON_KEY once in settings
-   **************************************************************************/
+  <hr>
 
-  // I18N texts
-  const I18N = {
-    el: {
-      app_title: "Λογαριασμοί ανά Μήνα",
-      add: "Προσθήκη",
-      export: "Εξαγωγή",
-      generate_code: "Δημιουργία κωδικού",
-      join: "Σύνδεση",
-      enter_code: "Εισάγετε κωδικό",
-      no_bills: "Δεν υπάρχουν λογαριασμοί",
-      new_common: "Νέος συνηθισμένος",
-      delete_selected: "Διαγραφή επιλεγμένου",
-      saved_settings: "Αποθηκεύτηκε"
-    },
-    en: {
-      app_title: "Bills per Month",
-      
-      add: "Add",
-      export: "Export",
-      generate_code: "Generate Code",
-      join: "Connect",
-      enter_code: "Enter code",
-      no_bills: "No bills",
-      new_common: "New common",
-      delete_selected: "Delete selected",
-      saved_settings: "Saved"
-    }
-  };
+  <!-- Supabase one-time fields -->
+  <div style="font-weight:600; margin-bottom:6px;">Supabase (one-time)</div>
+  <div style="font-size:13px; color:#666; margin-bottom:6px;">Επικόλλησε εδώ ΜΙΑ φορά τα στοιχεία του project σου (anon key only):</div>
+  <div style="margin-bottom:6px;">
+    <input id="supabaseUrlField" placeholder="SUPABASE_URL (https://... )" style="width:100%">
+  </div>
+  <div>
+    <input id="supabaseKeyField" placeholder="SUPABASE_ANON_KEY (anon key)" style="width:100%">
+  </div>
+  <div style="display:flex; gap:6px; margin-top:8px;">
+    <button id="saveSupabaseBtn" style="flex:1">Αποθήκευση</button>
+    <button id="clearSupabaseBtn" style="flex:1">Καθάρισμα</button>
+  </div>
 
-  // ------------ storage keys & state ------------
-  const storageKey = "myBills";
-  const commonKey = "myCommonBills";
-  const DEFAULT_COMMON = []; // removed defaults as requested
+  <hr>
 
-  let bills = JSON.parse(localStorage.getItem(storageKey) || "[]");
-  let commonBills = JSON.parse(localStorage.getItem(commonKey) || JSON.stringify(DEFAULT_COMMON));
-  const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
-  let currentMonth = monthNames[new Date().getMonth()];
+  <div style="font-size:12px; color:#666;">
+    Προαιρετικά: Αν έχεις endpoints (Edge Functions) μπορείς να τα επικολλήσεις εδώ:
+  </div>
+  <div style="margin-top:6px;">
+    <input id="fnGenerateField" placeholder="Function URL: /generate (optional)" style="width:100%">
+  </div>
+  <div style="margin-top:6px;">
+    <input id="fnAcceptField" placeholder="Function URL: /accept (optional)" style="width:100%">
+  </div>
+  <div style="margin-top:8px; font-size:12px; color:#666;">Τιμές αποθηκεύονται στο localStorage.</div>
+</div>
 
-  // DOM refs
-  const monthSelect = document.getElementById('monthSelect');
-  monthNames.forEach(m => {
-    const o = document.createElement('option');
-    o.value = m; o.textContent = m; monthSelect.appendChild(o);
+<script>
+const monthNames = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
+const storageKey = "myBills";
+const commonKey = "myCommonBills";
+
+// defaultCommon removed as requested (start empty)
+const defaultCommon = [];
+
+let bills = JSON.parse(localStorage.getItem(storageKey) || "[]");
+let commonBills = JSON.parse(localStorage.getItem(commonKey) || JSON.stringify(defaultCommon));
+let currentMonth = monthNames[new Date().getMonth()];
+
+// populate months
+const monthSelect = document.getElementById('monthSelect');
+monthNames.forEach(m => { 
+  const opt = document.createElement('option'); 
+  opt.value = m; 
+  opt.textContent = m; 
+  monthSelect.appendChild(opt); 
+});
+monthSelect.value = currentMonth;
+
+// populate common dropdown
+function renderCommon() {
+  const select = document.getElementById("commonBills");
+  select.innerHTML = '<option value="">-- Συνηθισμένοι --</option>';
+  commonBills.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
   });
-  monthSelect.value = currentMonth;
 
-  // language
-  let lang = localStorage.getItem('lang') || (navigator.language && navigator.language.startsWith('el') ? 'el' : 'el');
-  document.getElementById('langSelect').value = lang;
-  function applyLang() {
-    document.getElementById('appTitle').textContent = I18N[lang].app_title;
-    document.getElementById('subTitle').textContent = I18N[lang].sub_title;
-    document.getElementById('addBtn').textContent = I18N[lang].add;
-    document.getElementById('exportBtn').textContent = I18N[lang].export;
-    document.getElementById('genCodeBtn').textContent = I18N[lang].generate_code;
-    document.getElementById('joinCodeBtn').textContent = I18N[lang].join;
-    document.getElementById('codeInput').placeholder = I18N[lang].enter_code;
-    document.getElementById('newCommon').placeholder = I18N[lang].new_common;
-  }
-  applyLang();
-  document.getElementById('langSelect').addEventListener('change', (e)=>{ lang = e.target.value; localStorage.setItem('lang', lang); applyLang(); });
-
-  // render common dropdowns
-  function renderCommon() {
-    const sel = document.getElementById('commonBills');
-    const del = document.getElementById('delCommonSelect');
-    sel.innerHTML = '<option value="">-- Συνηθισμένοι --</option>';
+  // also fill delete select inside settings if present (keep compatibility)
+  const del = document.getElementById('delCommonSelect');
+  if (del) {
     del.innerHTML = '';
     commonBills.forEach(c => {
-      const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o);
-      const d = document.createElement('option'); d.value = c; d.textContent = c; del.appendChild(d);
+      const dopt = document.createElement('option'); dopt.value = c; dopt.textContent = c; del.appendChild(dopt);
     });
   }
+}
+renderCommon();
+
+function fillTitle(val) {
+  if (val) {
+    document.getElementById("title").value = val;
+  }
+}
+
+function addCommon() {
+  const val = document.getElementById("newCommon").value.trim();
+  if (!val) return;
+  if (!commonBills.includes(val)) {
+    commonBills.push(val);
+    localStorage.setItem(commonKey, JSON.stringify(commonBills));
+    renderCommon();
+  }
+  document.getElementById("newCommon").value = '';
+}
+
+function deleteCommon() {
+  const select = document.getElementById("commonBills");
+  const val = select.value;
+  if (!val) return;
+  commonBills = commonBills.filter(c => c !== val);
+  localStorage.setItem(commonKey, JSON.stringify(commonBills));
   renderCommon();
+}
 
-  function fillTitle(v){ if (v) document.getElementById('title').value = v; }
-
-  // add & delete common
-  document.getElementById('addCommonBtn').addEventListener('click', ()=>{
-    const val = document.getElementById('newCommon').value.trim();
-    if (!val) return;
-    if (!commonBills.includes(val)) { commonBills.push(val); localStorage.setItem(commonKey, JSON.stringify(commonBills)); renderCommon(); syncCommonToServer().catch(()=>{}); }
-    document.getElementById('newCommon').value = '';
-  });
-  document.getElementById('delCommonBtn').addEventListener('click', ()=>{
-    const v = document.getElementById('delCommonSelect').value;
-    if (!v) return;
-    commonBills = commonBills.filter(x=>x!==v);
-    localStorage.setItem(commonKey, JSON.stringify(commonBills)); renderCommon(); syncCommonToServer().catch(()=>{});
-  });
-
-  // save local & render
-  function saveLocal(){ localStorage.setItem(storageKey, JSON.stringify(bills)); render(); }
-
-  // original addBill but mark unsynced local
-  document.getElementById('addBtn').addEventListener('click', addBill);
-  async function addBill(){
-    const titleEl = document.getElementById('title'); const amountEl = document.getElementById('amount');
-    const title = titleEl.value.trim(); const amount = parseFloat(amountEl.value); const month = monthSelect.value;
-    if (!title || !amount || !month) { alert(lang==='el' ? 'Συμπλήρωσε όλα τα πεδία!' : 'Fill all fields!'); return; }
-    const localId = Date.now() + Math.floor(Math.random()*999);
-    const newBill = { id: localId, title, amount, month, paid:false, synced:false };
-    bills.push(newBill);
-    saveLocal();
-
-    // if connected to supabase & groupCode, push to server (realtime will reconcile)
-    if (supabaseClient && connected && groupCode) {
-      try {
-        await supabaseClient.from('bills').insert([{ group_code: groupCode, title, amount, month, paid:false }]);
-      } catch(e){ console.warn('insert fail', e); }
-    }
-
-    titleEl.value=''; amountEl.value=''; document.getElementById('commonBills').value='';
-  }
-
-  // toggle paid
-  window.togglePaid = async function(id){
-    bills = bills.map(b => b.id===id ? { ...b, paid: !b.paid } : b);
-    saveLocal();
-    if (supabaseClient && connected && groupCode) {
-      // best-effort match by title/amount/month -> update first found
-      const local = bills.find(x=>x.id===id);
-      if (!local) return;
-      try {
-        const { data } = await supabaseClient.from('bills').select('id,paid').eq('group_code', groupCode).eq('title', local.title).eq('amount', local.amount).eq('month', local.month).limit(1);
-        if (data && data.length>0) {
-          await supabaseClient.from('bills').update({ paid: !data[0].paid }).eq('id', data[0].id);
-        }
-      } catch(e){ console.warn(e); }
-    }
-  };
-
-  // delete
-  window.deleteBill = async function(id){
-    const maybe = bills.find(b=>b.id===id);
-    bills = bills.filter(b=>b.id!==id); saveLocal();
-    if (supabaseClient && connected && groupCode && maybe) {
-      try {
-        const { data } = await supabaseClient.from('bills').select('id').eq('group_code', groupCode).eq('title', maybe.title).eq('amount', maybe.amount).eq('month', maybe.month).limit(1);
-        if (data && data.length>0) await supabaseClient.from('bills').delete().eq('id', data[0].id);
-      } catch(e){ console.warn(e); }
-    }
-  };
-
-  // change month + render
-  function changeMonth(m){ currentMonth = m; monthSelect.value = m; render(); }
-
-  // render average helper
-  function renderAverage(monthBills){
-    if (!monthBills || monthBills.length===0) return '';
-    const avg = monthBills.reduce((s,b)=>s+Number(b.amount),0)/monthBills.length;
-    return `<div style="text-align:center; margin-top:8px; font-size:14px; color:var(--primary);">Μέσος όρος: ${avg.toFixed(2)} €</div>`;
-  }
-
-  // render
-  function render(){
-    const container = document.getElementById('monthContainer');
-    container.innerHTML = '';
-
-    const monthsWith = [...new Set(bills.map(b=>b.month))];
-    const nav = document.getElementById('monthNav'); nav.innerHTML = '';
-    monthsWith.forEach(m=>{
-      const btn = document.createElement('button'); btn.textContent = m; btn.onclick = ()=>changeMonth(m);
-      if (m===currentMonth) btn.classList.add('active'); nav.appendChild(btn);
-    });
-
-    const monthBills = bills.filter(b=>b.month===currentMonth);
-    if (monthBills.length===0) {
-      container.innerHTML = `<h2>${currentMonth}</h2><p style="text-align:center;">${I18N[lang].no_bills}</p>`; return;
-    }
-
-    const h2 = document.createElement('h2'); h2.textContent = currentMonth; container.appendChild(h2);
-
-    const table = document.createElement('table'); const thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>'; table.appendChild(thead);
-    const tbody = document.createElement('tbody');
-    monthBills.forEach(b=>{
-      const row = document.createElement('tr'); if (b.paid) row.classList.add('paid');
-      row.innerHTML = `<td><input type="checkbox" ${b.paid ? 'checked' : ''} onclick="togglePaid(${b.id})"></td>
-        <td>${escapeHtml(b.title)}</td>
-        <td>${Number(b.amount).toFixed(2)} €</td>
-        <td><button class="small" onclick="deleteBill(${b.id})">Διαγραφή</button></td>`;
-      tbody.appendChild(row);
-    });
-    table.appendChild(tbody); container.appendChild(table);
-
-    // append average
-    container.innerHTML += renderAverage(monthBills);
-  }
-
-  monthSelect.onchange = ()=>changeMonth(monthSelect.value);
+function save() {
+  localStorage.setItem(storageKey, JSON.stringify(bills));
   render();
+}
 
-  // export
-  document.getElementById('exportBtn').addEventListener('click', ()=> {
-    const blob = new Blob([JSON.stringify(bills)], { type:'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'logariasmoi.json'; a.click();
+function addBill() {
+  const title = document.getElementById("title").value;
+  const amount = parseFloat(document.getElementById("amount").value);
+  const month = document.getElementById("monthSelect").value;
+  if (!title || !amount || !month) { alert("Συμπλήρωσε όλα τα πεδία!"); return; }
+  bills.push({ id: Date.now(), title, amount, month, paid: false });
+  save();
+  document.getElementById("title").value = '';
+  document.getElementById("amount").value = '';
+  document.getElementById("commonBills").value = '';
+}
+
+function togglePaid(id) {
+  bills = bills.map(b => b.id === id ? { ...b, paid: !b.paid } : b);
+  save();
+}
+
+function deleteBill(id) {
+  bills = bills.filter(b => b.id !== id);
+  save();
+}
+
+function changeMonth(month) {
+  currentMonth = month;
+  monthSelect.value = month;
+  render();
+}
+
+/* ---------- render & average ---------- */
+function render() {
+  const container = document.getElementById("monthContainer");
+  container.innerHTML = '';
+
+  // Months navigation
+  const monthsWithBills = [...new Set(bills.map(b => b.month))];
+  const nav = document.getElementById('monthNav');
+  nav.innerHTML = '';
+  monthsWithBills.forEach(m => {
+    const btn = document.createElement('button');
+    btn.textContent = m;
+    btn.onclick = () => changeMonth(m);
+    if (m === currentMonth) btn.style.background = '#0284c7';
+    nav.appendChild(btn);
   });
 
-  function toggleSettings(){ const p = document.getElementById('settingsPanel'); p.style.display = p.style.display==='block' ? 'none' : 'block'; }
-
-  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
-
-  // ----------------- Supabase & group logic -----------------
-  let supabaseClient = null;
-  let connected = false;
-  let groupCode = localStorage.getItem('bilss_group_code') || null;
-
-  // load saved settings if present
-  const savedUrl = localStorage.getItem('BILSS_SUPABASE_URL') || '';
-  const savedKey = localStorage.getItem('BILSS_SUPABASE_KEY') || '';
-  const savedFnGen = localStorage.getItem('BILSS_FN_GENERATE') || '';
-  const savedFnAcc = localStorage.getItem('BILSS_FN_ACCEPT') || '';
-
-  document.getElementById('supabaseUrl').value = savedUrl;
-  document.getElementById('supabaseKey').value = savedKey;
-  document.getElementById('fnGenerate').value = savedFnGen;
-  document.getElementById('fnAccept').value = savedFnAcc;
-
-  function setStatus(t){ document.getElementById('status').textContent = t; }
-
-  // save settings handler (one-time)
-  document.getElementById('saveSettingsBtn').addEventListener('click', ()=>{
-    const u = document.getElementById('supabaseUrl').value.trim();
-    const k = document.getElementById('supabaseKey').value.trim();
-    const fg = document.getElementById('fnGenerate').value.trim();
-    const fa = document.getElementById('fnAccept').value.trim();
-    if (!u || !k) return alert(lang==='el' ? 'Πρέπει να επικολλήσεις URL & ANON key' : 'Paste both URL & anon key');
-    localStorage.setItem('BILSS_SUPABASE_URL', u);
-    localStorage.setItem('BILSS_SUPABASE_KEY', k);
-    localStorage.setItem('BILSS_FN_GENERATE', fg);
-    localStorage.setItem('BILSS_FN_ACCEPT', fa);
-    initSupabaseAndConnect(u,k);
-    alert(I18N[lang].saved_settings);
-  });
-
-  document.getElementById('clearSettingsBtn').addEventListener('click', ()=>{
-    localStorage.removeItem('BILSS_SUPABASE_URL'); localStorage.removeItem('BILSS_SUPABASE_KEY');
-    localStorage.removeItem('BILSS_FN_GENERATE'); localStorage.removeItem('BILSS_FN_ACCEPT');
-    document.getElementById('supabaseUrl').value=''; document.getElementById('supabaseKey').value='';
-    document.getElementById('fnGenerate').value=''; document.getElementById('fnAccept').value='';
-    alert(lang==='el' ? 'Καθαρίστηκε' : 'Cleared');
-  });
-
-  // init if saved
-  if (savedUrl && savedKey) initSupabaseAndConnect(savedUrl, savedKey);
-  else {
-    if (groupCode) setStatus('Group: ' + groupCode + ' (local only)');
-    else setStatus('Local only - paste Supabase keys to enable cloud');
+  const monthBills = bills.filter(b => b.month === currentMonth);
+  if (monthBills.length === 0) {
+    container.innerHTML = `<h2>${currentMonth}</h2><p style='text-align:center;'>Δεν υπάρχουν λογαριασμοί</p>`;
+    return;
   }
 
-  async function initSupabaseAndConnect(url, key){
+  const h2 = document.createElement('h2');
+  h2.textContent = currentMonth;
+  container.appendChild(h2);
+
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th>✔</th><th>Όνομα</th><th>Ποσό (€)</th><th>Διαγραφή</th></tr>';
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  monthBills.forEach(b => {
+    const row = document.createElement('tr');
+    if (b.paid) row.classList.add('paid');
+    row.innerHTML = `
+      <td><input type="checkbox" ${b.paid ? 'checked' : ''} onclick="togglePaid(${b.id})"></td>
+      <td>${escapeHtml(b.title)}</td>
+      <td>${Number(b.amount).toFixed(2)} €</td>
+      <td><button onclick="deleteBill(${b.id})">Διαγραφή</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+  table.appendChild(tbody);
+  container.appendChild(table);
+
+  // compute and show average:
+  const avg = monthBills.length ? (monthBills.reduce((s,x)=>s+Number(x.amount),0)/monthBills.length) : 0;
+  const avgDiv = document.createElement('div');
+  avgDiv.style.textAlign = 'center';
+  avgDiv.style.marginTop = '8px';
+  avgDiv.style.color = '#0ea5e9';
+  avgDiv.textContent = `Μέσος όρος: ${avg.toFixed(2)} €`;
+  container.appendChild(avgDiv);
+}
+
+monthSelect.onchange = () => changeMonth(monthSelect.value);
+render();
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(bills)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'logariasmoi.json';
+  a.click();
+}
+
+// toggle settings panel
+function toggleSettings() {
+  const panel = document.getElementById("settingsPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
+}
+
+// helper to escape HTML
+function escapeHtml(unsafe) {
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/* -------------------- NEW: pairing + supabase minimal glue --------------------
+   These additions are minimal and do not modify your original functions.
+   - You must paste your SUPABASE_URL and SUPABASE_ANON_KEY once in the panel fields and click "Αποθήκευση".
+   - If you don't paste them, the app works local-only exactly like before.
+   - The generate/accept function fields are optional (left for advanced use).
+   --------------------------------------------------------------------------- */
+
+// Supabase placeholders saved in localStorage (one-time)
+const SUPABASE_URL_KEY = 'BILSS_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'BILSS_SUPABASE_ANON';
+const FN_GENERATE_KEY = 'BILSS_FN_GENERATE';
+const FN_ACCEPT_KEY = 'BILSS_FN_ACCEPT';
+
+const supabaseUrlField = document.getElementById('supabaseUrlField');
+const supabaseKeyField = document.getElementById('supabaseKeyField');
+const fnGenerateField = document.getElementById('fnGenerateField');
+const fnAcceptField = document.getElementById('fnAcceptField');
+
+// load saved into inputs
+supabaseUrlField.value = localStorage.getItem(SUPABASE_URL_KEY) || '';
+supabaseKeyField.value = localStorage.getItem(SUPABASE_ANON_KEY) || '';
+fnGenerateField.value = localStorage.getItem(FN_GENERATE_KEY) || '';
+fnAcceptField.value = localStorage.getItem(FN_ACCEPT_KEY) || '';
+
+let supabaseClient = null;
+let groupCode = localStorage.getItem('bilss_group_code') || null;
+let connected = false;
+
+function setStatus(text){
+  const s = document.getElementById('genCodeDisplay') || document.getElementById('status');
+  if (s) s.textContent = text;
+}
+
+// save supabase details (one-time)
+document.getElementById('saveSupabaseBtn').addEventListener('click', () => {
+  const u = supabaseUrlField.value.trim();
+  const k = supabaseKeyField.value.trim();
+  const fg = fnGenerateField.value.trim();
+  const fa = fnAcceptField.value.trim();
+  if (!u || !k) { alert('Πρέπει να επικολλήσεις URL & ANON key'); return; }
+  localStorage.setItem(SUPABASE_URL_KEY, u);
+  localStorage.setItem(SUPABASE_ANON_KEY, k);
+  localStorage.setItem(FN_GENERATE_KEY, fg);
+  localStorage.setItem(FN_ACCEPT_KEY, fa);
+  initSupabase(u, k);
+  alert('Αποθηκεύτηκε (μία φορά)');
+});
+
+// clear supabase details
+document.getElementById('clearSupabaseBtn').addEventListener('click', () => {
+  localStorage.removeItem(SUPABASE_URL_KEY);
+  localStorage.removeItem(SUPABASE_ANON_KEY);
+  localStorage.removeItem(FN_GENERATE_KEY);
+  localStorage.removeItem(FN_ACCEPT_KEY);
+  supabaseUrlField.value = '';
+  supabaseKeyField.value = '';
+  fnGenerateField.value = '';
+  fnAcceptField.value = '';
+  alert('Καθαρίστηκε');
+});
+
+// init if values exist
+const savedUrl = localStorage.getItem(SUPABASE_URL_KEY);
+const savedKey = localStorage.getItem(SUPABASE_ANON_KEY);
+if (savedUrl && savedKey) initSupabase(savedUrl, savedKey);
+
+// initialize Supabase client (minimal)
+function initSupabase(url, key){
+  try {
+    // supabase js from CDN exposes `supabase`
+    supabaseClient = supabase.createClient(url, key);
+    setStatus('Supabase init');
+    // attempt to join existing groupCode if present
+    if (groupCode) joinGroup(groupCode);
+  } catch (e) {
+    console.warn('Supabase init failed', e);
+    supabaseClient = null;
+  }
+}
+
+// generate 6-digit code
+document.getElementById('generateCodeBtn').addEventListener('click', async () => {
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  document.getElementById('genCodeDisplay').textContent = code + ' ⏳';
+  groupCode = code;
+  localStorage.setItem('bilss_group_code', groupCode);
+
+  if (supabaseClient) {
     try {
-      supabaseClient = supabase.createClient(url, key);
-      setStatus('Connecting to Supabase...');
-      // try anon sign-in (best-effort)
-      try { if (supabaseClient.auth && supabaseClient.auth.signInAnonymously) await supabaseClient.auth.signInAnonymously(); } catch(e){ /*ignore*/ }
-      setStatus('Connected to Supabase');
-      if (groupCode) await joinGroup(groupCode);
-    } catch(e){ conso
+      // create group row in groups table (if exists)
+      await supabaseClient.from('groups').upsert([{ code, created_at: new Date().toISOString() }], { onConflict: ['code'] });
+      await joinGroup(code);
+    } catch (e) {
+      console.warn('group create fail', e);
+      setStatus('Group create failed');
+    }
+  } else {
+    setStatus('Local group: ' + code);
+  }
+
+  // optional call to generate function if provided
+  const fg = localStorage.getItem(FN_GENERATE_KEY) || fnGenerateField.value.trim();
+  if (fg) {
+    try {
+      fetch(fg, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ device_id: cryptoRandomUUID(), code }) }).catch(()=>{});
+    } catch(e){}
+  }
+});
+
+// accept/join code
+document.getElementById('acceptCodeBtn').addEventListener('click', async () => {
+  const code = document.getElementById('inputCode').value.trim();
+  if (!code) return alert('Δώσε κωδικό');
+  await joinGroup(code);
+});
+
+async function joinGroup(code) {
+  if (!code) return;
+  groupCode = code;
+  localStorage.setItem('bilss_group_code', groupCode);
+  setStatus('Joining ' + code + ' ...');
+
+  if (!supabaseClient) {
+    setStatus('Local group: ' + code);
+    document.getElementById('genCodeDisplay').textContent = code;
+    return;
+  }
+
+  try {
+    // ensure group exists
+    await supabaseClient.from('groups').upsert([{ code, created_at: new Date().toISOString() }], { onConflict: ['code'] });
+
+    // load server bills for group
+    const { data: rows, error } = await supabaseClient.from('bills').select('*').eq('group_code', code);
+    if (error) console.warn('load bills error', error);
+    if (rows && rows.length) {
+      bills = rows.map(r => ({ id: r.id, title: r.title, amount: Number(r.amount), month: r.month, paid: !!r.paid }));
+      localStorage.setItem(storageKey, JSON.stringify(bills));
+      render();
+    } else {
+      // push local items if server empty
+      await pushLocalToServer();
+    }
+
+    // subscribe realtime
+    setupRealtime(code);
+    connected = true;
+    setStatus('Connected: ' + code);
+    document.getElementById('genCodeDisplay').textContent = code + ' ✓';
+  } catch (e) {
+    console.warn('joinGroup error', e);
+    setStatus('Join failed');
+  }
+}
+
+// push local numeric-id bills to server
+async function pushLocalToServer() {
+  if (!supabaseClient || !groupCode) return;
+  const unsynced = bills.filter(b => typeof b.id === 'number');
+  for (const b of unsynced) {
+    try {
+      await supabaseClient.from('bills').insert([{ group_code: groupCode, title: b.title, amount: b.amount, month: b.month, paid: b.paid }]);
+    } catch(e) { console.warn('push local', e); }
+  }
+}
+
+// setup realtime (listens for inserts/updates/deletes on group_code)
+function setupRealtime(code) {
+  if (!supabaseClient || !code) return;
+  try {
+    if (window._bilssChannel && supabaseClient.removeChannel) {
+      try { supabaseClient.removeChannel(window._bilssChannel); } catch(e){}
+    }
+    const ch = supabaseClient.channel('public:bills:group_' + code)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bills', filter: `group_code=eq.${code}` }, payload => {
+        const r = payload.new;
+        bills = bills.filter(b => b.id !== r.id);
+        bills.push({ id: r.id, title: r.title, amount: Number(r.amount), month: r.month, paid: !!r.paid });
+        localStorage.setItem(storageKey, JSON.stringify(bills));
+        render();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bills', filter: `group_code=eq.${code}` }, payload => {
+        const r = payload.new;
+        bills = bills.map(b => b.id === r.id ? { id: r.id, title: r.title, amount: Number(r.amount), month: r.month, paid: !!r.paid } : b);
+        localStorage.setItem(storageKey, JSON.stringify(bills));
+        render();
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bills', filter: `group_code=eq.${code}` }, payload => {
+        const r = payload.old;
+        bills = bills.filter(b => b.id !== r.id);
+        localStorage.setItem(storageKey, JSON.stringify(bills));
+        render();
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setStatus('Realtime connected');
+      });
+
+    window._bilssChannel = ch;
+  } catch(e) { console.warn('realtime error', e); }
+}
+
+// helper UUID
+function cryptoRandomUUID(){
+  if (crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now() + '-' + Math.floor(Math.random()*1000000);
+}
+
+// expose manual init for advanced use if user prefers to set keys in code
+window.SUPABASE_MANUAL_INIT = function(url, key, fnGen, fnAcc){
+  localStorage.setItem(SUPABASE_URL_KEY, url);
+  localStorage.setItem(SUPABASE_ANON_KEY, key);
+  if (fnGen) localStorage.setItem(FN_GENERATE_KEY, fnGen);
+  if (fnAcc) localStorage.setItem(FN_ACCEPT_KEY, fnAcc);
+  initSupabase(url, key);
+};
+
+// end of additions
+</script>
+</body>
+</html>
